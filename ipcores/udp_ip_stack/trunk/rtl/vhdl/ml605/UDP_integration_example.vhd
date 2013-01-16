@@ -36,15 +36,7 @@ entity UDP_integration_example is
          ------------------
          PBTX                   : in std_logic;
          PB_DO_SECOND_TX        : in std_logic;
-         DO_SECOND_TX_LED       : out std_logic;
-         UDP_RX                 : out std_logic;
-         UDP_Start              : out std_logic;
-         PBTX_LED               : out std_logic;
-         TX_Started             : out std_logic;
-         TX_Completed           : out std_logic;
-         TX_RSLT_0              : out std_logic;
-         TX_RSLT_1              : out std_logic;
-         reset_leds             : in std_logic;
+
          display                : out std_logic_vector(3 downto 0);
 
          -- GMII Interface
@@ -60,7 +52,10 @@ entity UDP_integration_example is
          gmii_rx_clk                   : in  std_logic;
          gmii_col                      : in  std_logic;
          gmii_crs                      : in  std_logic;
-         mii_tx_clk                    : in  std_logic
+         gmii_gtx_clk                  : out std_logic;
+         phy_int                       : in std_logic;
+         phy_mdc                       : out std_logic;
+         phy_mdio                      : inout std_logic
        );
 end UDP_integration_example;
 
@@ -99,19 +94,22 @@ architecture Behavioral of UDP_integration_example is
            -- status signals
            arp_pkt_count      : out STD_LOGIC_VECTOR(7 downto 0);     -- count of arp pkts received
            ip_pkt_count     : out STD_LOGIC_VECTOR(7 downto 0);     -- number of IP pkts received for us
-                                                                -- GMII Interface
-           phy_resetn           : out std_logic;
-           gmii_txd             : out std_logic_vector(7 downto 0);
-           gmii_tx_en           : out std_logic;
-           gmii_tx_er           : out std_logic;
-           gmii_tx_clk          : out std_logic;
-           gmii_rxd             : in  std_logic_vector(7 downto 0);
-           gmii_rx_dv           : in  std_logic;
-           gmii_rx_er           : in  std_logic;
-           gmii_rx_clk          : in  std_logic;
-           gmii_col             : in  std_logic;
-           gmii_crs             : in  std_logic;
-           mii_tx_clk           : in  std_logic
+           -- GMII Interface
+           phy_resetn                    : out std_logic;
+           gmii_txd                      : out std_logic_vector(7 downto 0);
+           gmii_tx_en                    : out std_logic;
+           gmii_tx_er                    : out std_logic;
+           gmii_tx_clk                   : out std_logic;
+           gmii_rxd                      : in  std_logic_vector(7 downto 0);
+           gmii_rx_dv                    : in  std_logic;
+           gmii_rx_er                    : in  std_logic;
+           gmii_rx_clk                   : in  std_logic;
+           gmii_col                      : in  std_logic;
+           gmii_crs                      : in  std_logic;
+           gmii_gtx_clk                  : out std_logic;
+           phy_int                       : in std_logic;
+           phy_mdc                       : out std_logic;
+           phy_mdio                      : inout std_logic
          );
   end component;
 
@@ -173,20 +171,6 @@ begin
     our_ip  <= x"c0a801F8";   -- 192.168.1.248
     our_mac   <= x"002320212223";
     control_int.ip_controls.arp_controls.clear_cache <= '0';
-
-    -- determine RX good and error LEDs
-    if udp_rx_int.hdr.is_valid = '1' then
-      UDP_RX <= '1';
-    else
-      UDP_RX <= '0';
-    end if;
-
-    UDP_Start <= udp_rx_start_int;
-    TX_Started <= tx_start_reg; --tx_started_reg;
-    TX_Completed <= tx_fin_reg;
-    TX_RSLT_0 <= udp_tx_result_int(0);
-    TX_RSLT_1 <= udp_tx_result_int(1);
-    DO_SECOND_TX_LED <= prime_second_tx;
 
     --Set LEDS to indicate current state
     case state is
@@ -347,11 +331,9 @@ begin
         tx_hdr.checksum <= (others => '0');
         tx_started_reg <= '0';
         tx_fin_reg <= '0';
-        PBTX_LED <= '0';
         do_second_tx <= '0';
         prime_second_tx <= '0';
       else
-        PBTX_LED <= PBTX;
 
         -- Next rx_state processing
         if set_state = '1' then
@@ -470,17 +452,20 @@ begin
              -- GMII Interface
              -----------------
              phy_resetn        => phy_resetn,
-             gmii_txd         => gmii_txd,
+             gmii_txd          => gmii_txd,
              gmii_tx_en        => gmii_tx_en,
              gmii_tx_er        => gmii_tx_er,
              gmii_tx_clk       => gmii_tx_clk,
-             gmii_rxd         => gmii_rxd,
+             gmii_rxd          => gmii_rxd,
              gmii_rx_dv        => gmii_rx_dv,
              gmii_rx_er        => gmii_rx_er,
              gmii_rx_clk       => gmii_rx_clk,
-             gmii_col         => gmii_col,
-             gmii_crs         => gmii_crs,
-             mii_tx_clk        => mii_tx_clk
+             gmii_col          => gmii_col,
+             gmii_crs          => gmii_crs,
+             gmii_gtk_clk      => gmii_gtx_clk,
+             phy_int           => phy_int,
+             phy_mdc           => phy_mdc,
+             phy_mdio          => phy_mdio
            );
 
 

@@ -1,5 +1,7 @@
 #Master external reset if needed
 NET "reset"                         LOC = "H8";    ## 2  on SW6 pushbutton (active-high)
+NET "PBTX"                          LOC = "F3";    ## 2   on SW4 pushbutton (active-high)
+NET "PB_DO_SECOND_TX"               LOC = "G6";    ## 2   on SW7 pushbutton (active-high)
 
 ##On-board LEDS
 NET "display[0]"                    LOC = "D17";   ## 2   on DS3 LED
@@ -8,35 +10,35 @@ NET "display[2]"                    LOC = "D21";   ## 2   on DS5 LED
 NET "display[3]"                    LOC = "W15";   ## 2   on DS6 LED
 
 ##On-board Marvell PHY
-NET "PHY_COL"                       LOC = "M16";   ## 114 on U46
-NET "PHY_CRS"                       LOC = "N15";   ## 115 on U46
-NET "PHY_INT"                       LOC = "J20";   ## 32  on U46
-NET "PHY_MDC"                       LOC = "R19";   ## 35  on U46
-NET "PHY_MDIO"                      LOC = "V20";   ## 33  on U46
-NET "PHY_RESET"                     LOC = "J22";   ## 36  on U46
-NET "PHY_RXCLK"                     LOC = "P20";   ## 7   on U46
-NET "PHY_RXCTL_RXDV"                LOC = "T22";   ## 4   on U46
-NET "PHY_RXD0"                      LOC = "P19";   ## 3   on U46
-NET "PHY_RXD1"                      LOC = "Y22";   ## 128 on U46
-NET "PHY_RXD2"                      LOC = "Y21";   ## 126 on U46
-NET "PHY_RXD3"                      LOC = "W22";   ## 125 on U46
-NET "PHY_RXD4"                      LOC = "W20";   ## 124 on U46
-NET "PHY_RXD5"                      LOC = "V22";   ## 123 on U46
-NET "PHY_RXD6"                      LOC = "V21";   ## 121 on U46
-NET "PHY_RXD7"                      LOC = "U22";   ## 120 on U46
-NET "PHY_RXER"                      LOC = "U20";   ## 8   on U46
-NET "PHY_TXCLK"                     LOC = "L20";   ## 10  on U46
-NET "PHY_TXCTL_TXEN"                LOC = "T8";    ## 16  on U46
-NET "PHY_TXC_GTXCLK"                LOC = "AB7";   ## 14  on U46
-NET "PHY_TXD0"                      LOC = "U10";   ## 18  on U46
-NET "PHY_TXD1"                      LOC = "T10";   ## 19  on U46
-NET "PHY_TXD2"                      LOC = "AB8";   ## 20  on U46
-NET "PHY_TXD3"                      LOC = "AA8";   ## 24  on U46
-NET "PHY_TXD4"                      LOC = "AB9";   ## 25  on U46
-NET "PHY_TXD5"                      LOC = "Y9";    ## 26  on U46
-NET "PHY_TXD6"                      LOC = "Y12";   ## 28  on U46
-NET "PHY_TXD7"                      LOC = "W12";   ## 29  on U46
-NET "PHY_TXER"                      LOC = "U8";    ## 13  on U46
+NET "phy_reset"                     LOC = "J22";   ## 36  on U46
+NET "gmii_col"                      LOC = "M16";   ## 114 on U46
+NET "gmii_crs"                      LOC = "N15";   ## 115 on U46
+NET "gmii_rx_clk"                   LOC = "P20";   ## 7   on U46
+NET "gmii_rx_dv"                    LOC = "T22";   ## 4   on U46
+NET "gmii_rxd[0]"                   LOC = "P19";   ## 3   on U46
+NET "gmii_rxd[1]"                   LOC = "Y22";   ## 128 on U46
+NET "gmii_rxd[2]"                   LOC = "Y21";   ## 126 on U46
+NET "gmii_rxd[3]"                   LOC = "W22";   ## 125 on U46
+NET "gmii_rxd[4]"                   LOC = "W20";   ## 124 on U46
+NET "gmii_rxd[5]"                   LOC = "V22";   ## 123 on U46
+NET "gmii_rxd[6]"                   LOC = "V21";   ## 121 on U46
+NET "gmii_rxd[7]"                   LOC = "U22";   ## 120 on U46
+NET "gmii_rx_er"                    LOC = "U20";   ## 8   on U46
+NET "gmii_tx_en"                    LOC = "T8";    ## 16  on U46
+NET "gmii_tx_clk"                   LOC = "L20";   ## 10  on U46
+NET "gmii_txd[0]"                   LOC = "U10";   ## 18  on U46
+NET "gmii_txd[1]"                   LOC = "T10";   ## 19  on U46
+NET "gmii_txd[2]"                   LOC = "AB8";   ## 20  on U46
+NET "gmii_txd[3]"                   LOC = "AA8";   ## 24  on U46
+NET "gmii_txd[4]"                   LOC = "AB9";   ## 25  on U46
+NET "gmii_txd[5]"                   LOC = "Y9";    ## 26  on U46
+NET "gmii_txd[6]"                   LOC = "Y12";   ## 28  on U46
+NET "gmii_txd[7]"                   LOC = "W12";   ## 29  on U46
+NET "gmii_tx_er"                    LOC = "U8";    ## 13  on U46
+NET "gmii_gtx_clk"                  LOC = "AB7";   ## 14  on U46
+NET "phy_int"                       LOC = "J20";   ## 32  on U46
+NET "phy_mdc"                       LOC = "R19";   ## 35  on U46
+NET "phy_mdio"                      LOC = "V20";   ## 33  on U46
 
 ##200MHz on-board master clock
 NET "clk_in_n"                      LOC = "K22";   ##

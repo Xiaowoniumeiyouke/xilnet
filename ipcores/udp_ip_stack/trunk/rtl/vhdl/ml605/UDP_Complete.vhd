@@ -54,19 +54,22 @@ entity UDP_Complete is
       -- status signals
          arp_pkt_count      : out STD_LOGIC_VECTOR(7 downto 0);     -- count of arp pkts received
          ip_pkt_count     : out STD_LOGIC_VECTOR(7 downto 0);     -- number of IP pkts received for us
-                                                              -- GMII Interface
-         phy_resetn           : out std_logic;
-         gmii_txd             : out std_logic_vector(7 downto 0);
-         gmii_tx_en           : out std_logic;
-         gmii_tx_er           : out std_logic;
-         gmii_tx_clk          : out std_logic;
-         gmii_rxd             : in  std_logic_vector(7 downto 0);
-         gmii_rx_dv           : in  std_logic;
-         gmii_rx_er           : in  std_logic;
-         gmii_rx_clk          : in  std_logic;
-         gmii_col             : in  std_logic;
-         gmii_crs             : in  std_logic;
-         mii_tx_clk           : in  std_logic
+         -- GMII Interface
+         phy_resetn                    : out std_logic;
+         gmii_txd                      : out std_logic_vector(7 downto 0);
+         gmii_tx_en                    : out std_logic;
+         gmii_tx_er                    : out std_logic;
+         gmii_tx_clk                   : out std_logic;
+         gmii_rxd                      : in  std_logic_vector(7 downto 0);
+         gmii_rx_dv                    : in  std_logic;
+         gmii_rx_er                    : in  std_logic;
+         gmii_rx_clk                   : in  std_logic;
+         gmii_col                      : in  std_logic;
+         gmii_crs                      : in  std_logic;
+         gmii_gtx_clk                  : out std_logic;
+         phy_int                       : in std_logic;
+         phy_mdc                       : out std_logic;
+         phy_mdio                      : inout std_logic
        );
 end UDP_Complete;
 
@@ -152,9 +155,9 @@ architecture structural of UDP_Complete is
            mac_rx_tready              : in  std_logic;              -- tells mac that we are ready to take data
            mac_rx_tlast               : out std_logic;              -- indicates last byte of the trame
 
-      -- GMII Interface
-      -----------------
-           phy_resetn                 : out std_logic;
+           -- GMII Interface
+           -----------------
+           phy_resetn                    : out std_logic;
            gmii_txd                      : out std_logic_vector(7 downto 0);
            gmii_tx_en                    : out std_logic;
            gmii_tx_er                    : out std_logic;
@@ -165,7 +168,10 @@ architecture structural of UDP_Complete is
            gmii_rx_clk                   : in  std_logic;
            gmii_col                      : in  std_logic;
            gmii_crs                      : in  std_logic;
-           mii_tx_clk                    : in  std_logic
+           gmii_gtx_clk                  : out std_logic;
+           phy_int                       : in std_logic;
+           phy_mdc                       : out std_logic;
+           phy_mdio                      : inout std_logic
          );
   end component;
 
@@ -313,8 +319,8 @@ begin
             mac_rx_tready     => mac_rx_tready,
             mac_rx_tlast      => mac_rx_tlast,
 
-        -- GMII Interface
-        -----------------
+            -- GMII Interface
+            -----------------
             phy_resetn        => phy_resetn,
             gmii_txd          => gmii_txd,
             gmii_tx_en        => gmii_tx_en,
@@ -324,9 +330,12 @@ begin
             gmii_rx_dv        => gmii_rx_dv,
             gmii_rx_er        => gmii_rx_er,
             gmii_rx_clk       => gmii_rx_clk,
-            gmii_col        => gmii_col,
+            gmii_col          => gmii_col,
             gmii_crs          => gmii_crs,
-            mii_tx_clk        => mii_tx_clk
+            gmii_gtk_clk      => gmii_gtk_clk,
+            phy_int           => phy_int,
+            phy_mdc           => phy_mdc,
+            phy_mdio          => phy_mdio
           );
 
 
