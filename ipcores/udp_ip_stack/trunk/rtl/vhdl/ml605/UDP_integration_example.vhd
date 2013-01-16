@@ -26,14 +26,14 @@ use work.arp_types.all;
 
 entity UDP_integration_example is
   port (
-      -- System signals
-      ------------------
+         -- System signals
+         ------------------
          reset	                      	: in  std_logic;	      				-- asynchronous reset
          clk_in_p              			: in  std_logic;     	 				-- 200MHz clock input from board
          clk_in_n              			: in  std_logic;
 
-    -- System controls
-    ------------------
+         -- System controls
+         ------------------
          PBTX									: in std_logic;
          PB_DO_SECOND_TX					: in std_logic;
          DO_SECOND_TX_LED					: out std_logic;
@@ -47,8 +47,8 @@ entity UDP_integration_example is
          reset_leds							: in std_logic;
          display                 		: out std_logic_vector(7 downto 0);
 
-      -- GMII Interface
-      -----------------
+         -- GMII Interface
+         -----------------
          phy_resetn            			: out std_logic;
          gmii_txd                      : out std_logic_vector(7 downto 0);
          gmii_tx_en                    : out std_logic;
@@ -67,9 +67,9 @@ end UDP_integration_example;
 architecture Behavioral of UDP_integration_example is
 
 
-------------------------------------------------------------------------------
--- Component Declaration for the complete UDP layer
-------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------
+  -- Component Declaration for the complete UDP layer
+  ------------------------------------------------------------------------------
   component UDP_Complete
     generic (
               CLOCK_FREQ			: integer := 125000000;							-- freq of data_in_clk -- needed to timout cntr
@@ -78,7 +78,7 @@ architecture Behavioral of UDP_integration_example is
               MAX_ARP_ENTRIES 	: integer := 255									-- max entries in the ARP store
             );
     Port (
-      -- UDP TX signals
+           -- UDP TX signals
            udp_tx_start			: in std_logic;							-- indicates req to tx UDP
            udp_txi					: in udp_tx_type;							-- UDP tx cxns
            udp_tx_result			: out std_logic_vector (1 downto 0);-- tx status (changes during transmission)
@@ -86,9 +86,9 @@ architecture Behavioral of UDP_integration_example is
                                                        -- UDP RX signals
            udp_rx_start			: out std_logic;							-- indicates receipt of udp header
            udp_rxo					: out udp_rx_type;
-      -- IP RX signals
+           -- IP RX signals
            ip_rx_hdr				: out ipv4_rx_header_type;
-      -- system signals
+           -- system signals
            clk_in_p             : in  std_logic;     	 				-- 200MHz clock input from board
            clk_in_n             : in  std_logic;
            clk_out					: out std_logic;
@@ -96,7 +96,7 @@ architecture Behavioral of UDP_integration_example is
            our_ip_address 		: in STD_LOGIC_VECTOR (31 downto 0);
            our_mac_address 		: in std_logic_vector (47 downto 0);
            control					: in udp_control_type;
-      -- status signals
+           -- status signals
            arp_pkt_count			: out STD_LOGIC_VECTOR(7 downto 0);			-- count of arp pkts received
            ip_pkt_count			: out STD_LOGIC_VECTOR(7 downto 0);			-- number of IP pkts received for us
                                                                 -- GMII Interface
@@ -203,9 +203,9 @@ begin
 
   end process;
 
-   -- AUTO TX process - on receipt of any UDP pkt, send a response. data sent is modified if a broadcast was received.
+  -- AUTO TX process - on receipt of any UDP pkt, send a response. data sent is modified if a broadcast was received.
 
-   -- TX response process - COMB
+  -- TX response process - COMB
   tx_proc_combinatorial: process(
     -- inputs
     udp_rx_start_int, udp_rx_int, udp_tx_data_out_ready_int, udp_tx_result_int, ip_rx_hdr_int,
@@ -334,7 +334,7 @@ begin
 
 
 
-   -- TX response process - SEQ
+  -- TX response process - SEQ
   tx_proc_sequential: process(clk_int)
   begin
     if rising_edge(clk_int) then
@@ -441,24 +441,24 @@ begin
 
 
 
-    ------------------------------------------------------------------------------
-    -- Instantiate the UDP layer
-    ------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------
+  -- Instantiate the UDP layer
+  ------------------------------------------------------------------------------
   UDP_block : UDP_Complete
   generic map (
                 ARP_TIMEOUT		=> 10		-- timeout in seconds
               )
   PORT MAP (
-        -- UDP interface
+             -- UDP interface
              udp_tx_start 			=> udp_tx_start_int,
              udp_txi 					=> udp_tx_int,
              udp_tx_result			=> udp_tx_result_int,
              udp_tx_data_out_ready=> udp_tx_data_out_ready_int,
              udp_rx_start 			=> udp_rx_start_int,
              udp_rxo 					=> udp_rx_int,
-        -- IP RX signals
+             -- IP RX signals
              ip_rx_hdr				=> ip_rx_hdr_int,
-        -- System interface
+             -- System interface
              clk_in_p             => clk_in_p,
              clk_in_n             => clk_in_n,
              clk_out					=> clk_int,
@@ -466,11 +466,11 @@ begin
              our_ip_address 		=> our_ip,
              our_mac_address 		=> our_mac,
              control					=> control_int,
-        -- status signals
+             -- status signals
              arp_pkt_count			=> arp_pkt_count_int,
              ip_pkt_count			=> ip_pkt_count_int,
-        -- GMII Interface
-        -----------------
+             -- GMII Interface
+             -----------------
              phy_resetn        => phy_resetn,
              gmii_txd        	=> gmii_txd,
              gmii_tx_en        => gmii_tx_en,
