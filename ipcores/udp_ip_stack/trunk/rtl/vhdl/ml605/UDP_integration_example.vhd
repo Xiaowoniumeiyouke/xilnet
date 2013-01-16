@@ -28,28 +28,28 @@ entity UDP_integration_example is
   port (
          -- System signals
          ------------------
-         reset	                      	: in  std_logic;	      				-- asynchronous reset
-         clk_in_p              			: in  std_logic;     	 				-- 200MHz clock input from board
-         clk_in_n              			: in  std_logic;
+         reset                      : in  std_logic;                -- asynchronous reset
+         clk_in_p                   : in  std_logic;              -- 200MHz clock input from board
+         clk_in_n                   : in  std_logic;
 
          -- System controls
          ------------------
-         PBTX									: in std_logic;
-         PB_DO_SECOND_TX					: in std_logic;
-         DO_SECOND_TX_LED					: out std_logic;
-         UDP_RX								: out std_logic;
-         UDP_Start							: out std_logic;
-         PBTX_LED								: out std_logic;
-         TX_Started							: out std_logic;
-         TX_Completed						: out std_logic;
-         TX_RSLT_0							: out std_logic;
-         TX_RSLT_1							: out std_logic;
-         reset_leds							: in std_logic;
-         display                 		: out std_logic_vector(7 downto 0);
+         PBTX                   : in std_logic;
+         PB_DO_SECOND_TX        : in std_logic;
+         DO_SECOND_TX_LED       : out std_logic;
+         UDP_RX                 : out std_logic;
+         UDP_Start              : out std_logic;
+         PBTX_LED               : out std_logic;
+         TX_Started             : out std_logic;
+         TX_Completed           : out std_logic;
+         TX_RSLT_0              : out std_logic;
+         TX_RSLT_1              : out std_logic;
+         reset_leds             : in std_logic;
+         display                : out std_logic_vector(3 downto 0);
 
          -- GMII Interface
          -----------------
-         phy_resetn            			: out std_logic;
+         phy_resetn                    : out std_logic;
          gmii_txd                      : out std_logic_vector(7 downto 0);
          gmii_tx_en                    : out std_logic;
          gmii_tx_er                    : out std_logic;
@@ -72,33 +72,33 @@ architecture Behavioral of UDP_integration_example is
   ------------------------------------------------------------------------------
   component UDP_Complete
     generic (
-              CLOCK_FREQ			: integer := 125000000;							-- freq of data_in_clk -- needed to timout cntr
-              ARP_TIMEOUT			: integer := 60;									-- ARP response timeout (s)
-              ARP_MAX_PKT_TMO	: integer := 5;									-- # wrong nwk pkts received before set error
-              MAX_ARP_ENTRIES 	: integer := 255									-- max entries in the ARP store
+              CLOCK_FREQ      : integer := 125000000;             -- freq of data_in_clk -- needed to timout cntr
+              ARP_TIMEOUT     : integer := 60;                  -- ARP response timeout (s)
+              ARP_MAX_PKT_TMO : integer := 5;                 -- # wrong nwk pkts received before set error
+              MAX_ARP_ENTRIES   : integer := 255                  -- max entries in the ARP store
             );
     Port (
            -- UDP TX signals
-           udp_tx_start			: in std_logic;							-- indicates req to tx UDP
-           udp_txi					: in udp_tx_type;							-- UDP tx cxns
-           udp_tx_result			: out std_logic_vector (1 downto 0);-- tx status (changes during transmission)
-           udp_tx_data_out_ready: out std_logic;							-- indicates udp_tx is ready to take data
+           udp_tx_start     : in std_logic;             -- indicates req to tx UDP
+           udp_txi          : in udp_tx_type;             -- UDP tx cxns
+           udp_tx_result      : out std_logic_vector (1 downto 0);-- tx status (changes during transmission)
+           udp_tx_data_out_ready: out std_logic;              -- indicates udp_tx is ready to take data
                                                        -- UDP RX signals
-           udp_rx_start			: out std_logic;							-- indicates receipt of udp header
-           udp_rxo					: out udp_rx_type;
+           udp_rx_start     : out std_logic;              -- indicates receipt of udp header
+           udp_rxo          : out udp_rx_type;
            -- IP RX signals
-           ip_rx_hdr				: out ipv4_rx_header_type;
+           ip_rx_hdr        : out ipv4_rx_header_type;
            -- system signals
-           clk_in_p             : in  std_logic;     	 				-- 200MHz clock input from board
+           clk_in_p             : in  std_logic;              -- 200MHz clock input from board
            clk_in_n             : in  std_logic;
-           clk_out					: out std_logic;
-           reset 					: in  STD_LOGIC;
-           our_ip_address 		: in STD_LOGIC_VECTOR (31 downto 0);
-           our_mac_address 		: in std_logic_vector (47 downto 0);
-           control					: in udp_control_type;
+           clk_out          : out std_logic;
+           reset          : in  STD_LOGIC;
+           our_ip_address     : in STD_LOGIC_VECTOR (31 downto 0);
+           our_mac_address    : in std_logic_vector (47 downto 0);
+           control          : in udp_control_type;
            -- status signals
-           arp_pkt_count			: out STD_LOGIC_VECTOR(7 downto 0);			-- count of arp pkts received
-           ip_pkt_count			: out STD_LOGIC_VECTOR(7 downto 0);			-- number of IP pkts received for us
+           arp_pkt_count      : out STD_LOGIC_VECTOR(7 downto 0);     -- count of arp pkts received
+           ip_pkt_count     : out STD_LOGIC_VECTOR(7 downto 0);     -- number of IP pkts received for us
                                                                 -- GMII Interface
            phy_resetn           : out std_logic;
            gmii_txd             : out std_logic_vector(7 downto 0);
@@ -115,7 +115,7 @@ architecture Behavioral of UDP_integration_example is
          );
   end component;
 
-  --	for UDP_block : UDP_Complete  use configuration work.UDP_Complete.udpc_multi_slot_arp;
+  --  for UDP_block : UDP_Complete  use configuration work.UDP_Complete.udpc_multi_slot_arp;
 
 
   type state_type is (IDLE, WAIT_RX_DONE, DATA_OUT, PAUSE, CHECK_SECOND_TX, SET_SEC_HDR);
@@ -124,41 +124,41 @@ architecture Behavioral of UDP_integration_example is
   type sec_tx_ctrl_type is (CLR,PRIME,DO,HOLD);
 
   -- system signals
-  signal clk_int							: std_logic;
-  signal our_mac 						: STD_LOGIC_VECTOR (47 downto 0);
-  signal our_ip							: STD_LOGIC_VECTOR (31 downto 0);
-  signal udp_tx_int						: udp_tx_type;
-  signal udp_tx_result_int			: std_logic_vector (1 downto 0);
-  signal udp_tx_data_out_ready_int	: std_logic;
-  signal udp_rx_int						: udp_rx_type;
-  signal udp_tx_start_int 			: std_logic;
-  signal udp_rx_start_int 			: std_logic;
-  signal arp_pkt_count_int			: STD_LOGIC_VECTOR(7 downto 0);
-  signal ip_pkt_count_int 			: STD_LOGIC_VECTOR(7 downto 0);
-  signal ip_rx_hdr_int					: ipv4_rx_header_type;
+  signal clk_int              : std_logic;
+  signal our_mac            : STD_LOGIC_VECTOR (47 downto 0);
+  signal our_ip             : STD_LOGIC_VECTOR (31 downto 0);
+  signal udp_tx_int           : udp_tx_type;
+  signal udp_tx_result_int      : std_logic_vector (1 downto 0);
+  signal udp_tx_data_out_ready_int  : std_logic;
+  signal udp_rx_int           : udp_rx_type;
+  signal udp_tx_start_int       : std_logic;
+  signal udp_rx_start_int       : std_logic;
+  signal arp_pkt_count_int      : STD_LOGIC_VECTOR(7 downto 0);
+  signal ip_pkt_count_int       : STD_LOGIC_VECTOR(7 downto 0);
+  signal ip_rx_hdr_int          : ipv4_rx_header_type;
 
   -- state signals
-  signal state							: state_type;
-  signal count							: unsigned (7 downto 0);
-  signal tx_hdr							: udp_tx_header_type;
-  signal tx_start_reg					: std_logic;
-  signal tx_started_reg 				: std_logic;
-  signal tx_fin_reg						: std_logic;
-  signal prime_second_tx				: std_logic; -- if want to do a 2nd tx after the first
-  signal do_second_tx					: std_logic; -- if need to do a 2nd tx as next tx
+  signal state              : state_type;
+  signal count              : unsigned (7 downto 0);
+  signal tx_hdr             : udp_tx_header_type;
+  signal tx_start_reg         : std_logic;
+  signal tx_started_reg         : std_logic;
+  signal tx_fin_reg           : std_logic;
+  signal prime_second_tx        : std_logic; -- if want to do a 2nd tx after the first
+  signal do_second_tx         : std_logic; -- if need to do a 2nd tx as next tx
 
   -- control signals
-  signal next_state						: state_type;
-  signal set_state						: std_logic;
-  signal set_count						: count_mode_type;
-  signal set_hdr							: std_logic;
-  signal set_tx_start					: set_clr_type;
-  signal set_last						: std_logic;
-  signal set_tx_started				: set_clr_type;
-  signal set_tx_fin						: set_clr_type;
-  signal first_byte_rx					: STD_LOGIC_VECTOR(7 downto 0);
-  signal control_int					: udp_control_type;
-  signal set_second_tx					: sec_tx_ctrl_type;
+  signal next_state           : state_type;
+  signal set_state            : std_logic;
+  signal set_count            : count_mode_type;
+  signal set_hdr              : std_logic;
+  signal set_tx_start         : set_clr_type;
+  signal set_last           : std_logic;
+  signal set_tx_started       : set_clr_type;
+  signal set_tx_fin           : set_clr_type;
+  signal first_byte_rx          : STD_LOGIC_VECTOR(7 downto 0);
+  signal control_int          : udp_control_type;
+  signal set_second_tx          : sec_tx_ctrl_type;
 
 begin
 
@@ -170,8 +170,8 @@ begin
   )
   begin
     -- set up our local addresses and default controls
-    our_ip 	<= x"c0a801F8";		-- 192.168.1.248
-    our_mac 	<= x"002320212223";
+    our_ip  <= x"c0a801F8";   -- 192.168.1.248
+    our_mac   <= x"002320212223";
     control_int.ip_controls.arp_controls.clear_cache <= '0';
 
     -- determine RX good and error LEDs
@@ -188,16 +188,13 @@ begin
     TX_RSLT_1 <= udp_tx_result_int(1);
     DO_SECOND_TX_LED <= prime_second_tx;
 
-    -- set display leds to show IP pkt rx count on 7..4 and arp rx count on 3..0
-    display (7 downto 4) <= ip_pkt_count_int (3 downto 0);
-
-    --		display (3 downto 0) <= arp_pkt_count_int (3 downto 0);
+    --Set LEDS to indicate current state
     case state is
-      when IDLE 			=> display (3 downto 0) <= "0001";
+      when IDLE       => display (3 downto 0) <= "0001";
       when WAIT_RX_DONE => display (3 downto 0) <= "0010";
-      when DATA_OUT 		=> display (3 downto 0) <= "0011";
-      when PAUSE	 		=> display (3 downto 0) <= "0100";
-      when CHECK_SECOND_TX	=> display (3 downto 0) <= "0101";
+      when DATA_OUT     => display (3 downto 0) <= "0011";
+      when PAUSE      => display (3 downto 0) <= "0100";
+      when CHECK_SECOND_TX  => display (3 downto 0) <= "0101";
       when SET_SEC_HDR => display (3 downto 0) <= "0110";
     end case;
 
@@ -285,7 +282,7 @@ begin
           set_state <= '1';
         else
           if udp_tx_result_int = UDPTX_RESULT_SENDING then
-            set_tx_start <= CLR;		-- reset out start req as soon as we know we are sending
+            set_tx_start <= CLR;    -- reset out start req as soon as we know we are sending
           end if;
           if ip_rx_hdr_int.is_broadcast = '1' then
             udp_tx_int.data.data_out <= std_logic_vector(count) or x"50";
@@ -365,9 +362,9 @@ begin
 
         -- count processing
         case set_count is
-          when RST =>  		count <= x"00";
-          when INCR => 		count <= count + 1;
-          when HOLD => 		count <= count;
+          when RST =>     count <= x"00";
+          when INCR =>    count <= count + 1;
+          when HOLD =>    count <= count;
         end case;
 
         -- set tx hdr
@@ -380,15 +377,16 @@ begin
           --   D to solaris box
           --   otherwise, direct to sender
           if do_second_tx = '1' then
-            tx_hdr.dst_ip_addr <= x"c0a80005";	-- set dst to solaris box at 192.168.0.5
+            tx_hdr.dst_ip_addr <= x"c0a801F0";  -- set dst to solaris box at 192.168.1.128
           elsif first_byte_rx = x"42" then
-            tx_hdr.dst_ip_addr <= IP_BC_ADDR;	-- send to Broadcast addr
+            tx_hdr.dst_ip_addr <= IP_BC_ADDR; -- send to Broadcast addr
           elsif first_byte_rx = x"43" then
-            tx_hdr.dst_ip_addr <= x"c0bbccdd";	-- set dst unknown so get ARP timeout
+            tx_hdr.dst_ip_addr <= x"c0bbccdd";  -- set dst unknown so get ARP timeout
           elsif first_byte_rx = x"44" then
-            tx_hdr.dst_ip_addr <= x"c0a80005";	-- set dst to solaris box at 192.168.0.5
+            tx_hdr.dst_ip_addr <= x"c0a801F0";  -- set dst to solaris box at 192.168.1.128
+            tx_hdr.dst_ip_addr <= x"c0a80005";  -- set dst to solaris box at 192.168.0.5
           else
-            tx_hdr.dst_ip_addr <= udp_rx_int.hdr.src_ip_addr;	-- reply to sender
+            tx_hdr.dst_ip_addr <= udp_rx_int.hdr.src_ip_addr; -- reply to sender
           end if;
           tx_hdr.dst_port <= udp_rx_int.hdr.src_port;
           tx_hdr.src_port <= udp_rx_int.hdr.dst_port;
@@ -446,42 +444,42 @@ begin
   ------------------------------------------------------------------------------
   UDP_block : UDP_Complete
   generic map (
-                ARP_TIMEOUT		=> 10		-- timeout in seconds
+                ARP_TIMEOUT   => 10   -- timeout in seconds
               )
   PORT MAP (
              -- UDP interface
-             udp_tx_start 			=> udp_tx_start_int,
-             udp_txi 					=> udp_tx_int,
-             udp_tx_result			=> udp_tx_result_int,
+             udp_tx_start       => udp_tx_start_int,
+             udp_txi          => udp_tx_int,
+             udp_tx_result      => udp_tx_result_int,
              udp_tx_data_out_ready=> udp_tx_data_out_ready_int,
-             udp_rx_start 			=> udp_rx_start_int,
-             udp_rxo 					=> udp_rx_int,
+             udp_rx_start       => udp_rx_start_int,
+             udp_rxo          => udp_rx_int,
              -- IP RX signals
-             ip_rx_hdr				=> ip_rx_hdr_int,
+             ip_rx_hdr        => ip_rx_hdr_int,
              -- System interface
              clk_in_p             => clk_in_p,
              clk_in_n             => clk_in_n,
-             clk_out					=> clk_int,
-             reset 					=> reset,
-             our_ip_address 		=> our_ip,
-             our_mac_address 		=> our_mac,
-             control					=> control_int,
+             clk_out          => clk_int,
+             reset          => reset,
+             our_ip_address     => our_ip,
+             our_mac_address    => our_mac,
+             control          => control_int,
              -- status signals
-             arp_pkt_count			=> arp_pkt_count_int,
-             ip_pkt_count			=> ip_pkt_count_int,
+             arp_pkt_count      => arp_pkt_count_int,
+             ip_pkt_count     => ip_pkt_count_int,
              -- GMII Interface
              -----------------
              phy_resetn        => phy_resetn,
-             gmii_txd        	=> gmii_txd,
+             gmii_txd         => gmii_txd,
              gmii_tx_en        => gmii_tx_en,
              gmii_tx_er        => gmii_tx_er,
              gmii_tx_clk       => gmii_tx_clk,
-             gmii_rxd        	=> gmii_rxd,
+             gmii_rxd         => gmii_rxd,
              gmii_rx_dv        => gmii_rx_dv,
              gmii_rx_er        => gmii_rx_er,
              gmii_rx_clk       => gmii_rx_clk,
-             gmii_col       	=> gmii_col,
-             gmii_crs        	=> gmii_crs,
+             gmii_col         => gmii_col,
+             gmii_crs         => gmii_crs,
              mii_tx_clk        => mii_tx_clk
            );
 
