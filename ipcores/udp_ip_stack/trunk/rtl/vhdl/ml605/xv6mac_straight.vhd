@@ -5,44 +5,6 @@
 -------------------------------------------------------------------------------
 --
 --
--- Description:  This is an adaptation of the Xilinx V6 MAC layer, but without the FIFOs
---
---
---
---    ---------------------------------------------------------------------
---    | EXAMPLE DESIGN WRAPPER                                            |
---    |           --------------------------------------------------------|
---    |           |FIFO BLOCK WRAPPER                                     |
---    |           |                                                       |
---    |           |                                                       |
---    |           |              -----------------------------------------|
---    |           |              | BLOCK LEVEL WRAPPER                    |
---    |           |              |    ---------------------               |
---    |           |              |    |   V6 EMAC CORE    |               |
---    |           |              |    |                   |               |
---    |           |              |    |                   |               |
---    |           |              |    |                   |               |
---    |           |              |    |                   |               |
---    |           |              |    |                   |               |
---    | |      |  |              |    |                   |  ---------    |
---    | |      |->|->----------->|--|--->| Tx            Tx  |--|       |--->|
---    | |      |  |              |    | AXI-S         PHY |  |       |    |
---    | |      |  |              |    | I/F           I/F |  |       |    |
---    | |      |  |              |    |                   |  | PHY   |    |
---    | |      |  |              |    |                   |  | I/F   |    |
---    | |      |  |              |    |                   |  |       |    |
---    | |      |  |              |    | Rx            Rx  |  |       |    |
---    | |      |  |              |    | AX)-S         PHY |  |       |    |
---    | |      |<-|<-------------|----| I/F           I/F |<-|       |<---|
---    | |      |  |              |    |                   |  ---------    |
---    | --------  |              |    ---------------------               |
---    |           |              |                                        |
---    |           |              -----------------------------------------|
---    |           --------------------------------------------------------|
---    ---------------------------------------------------------------------
---
---------------------------------------------------------------------------------
-
 library unisim;
 use unisim.vcomponents.all;
 
@@ -53,8 +15,8 @@ use ieee.numeric_std.all;
 
 entity xv6mac_straight is
   port (
-      -- System controls
-      ------------------
+         -- System controls
+         ------------------
          glbl_rst                      : in  std_logic;	      				-- asynchronous reset
          mac_reset                   	: in  std_logic;							-- reset mac layer
          clk_in_p              			: in  std_logic;     	 				-- 200MHz clock input from board
@@ -62,24 +24,24 @@ entity xv6mac_straight is
          tx_configuration_vector     : in std_logic_vector(79 downto 0);
          rx_configuration_vector     : in std_logic_vector(79 downto 0);
 
-      -- MAC Transmitter (AXI-S) Interface
-      ---------------------------------------------
+         -- MAC Transmitter (AXI-S) Interface
+         ---------------------------------------------
          mac_tx_clock              		: out  std_logic;							-- data sampled on rising edge
          mac_tx_tdata         			: in  std_logic_vector(7 downto 0);	-- data byte to tx
          mac_tx_tvalid        			: in  std_logic;							-- tdata is valid
          mac_tx_tready        			: out std_logic;							-- mac is ready to accept data
          mac_tx_tlast         			: in  std_logic;							-- indicates last byte of frame
 
-      -- MAC Receiver (AXI-S) Interface
-      ------------------------------------------
+         -- MAC Receiver (AXI-S) Interface
+         ------------------------------------------
          mac_rx_clock              		: out  std_logic;							-- data valid on rising edge
          mac_rx_tdata         			: out std_logic_vector(7 downto 0);	-- data byte received
          mac_rx_tvalid        			: out std_logic;							-- indicates tdata is valid
          mac_rx_tready        			: in  std_logic;							-- tells mac that we are ready to take data
          mac_rx_tlast         			: out std_logic;							-- indicates last byte of the trame
 
-      -- GMII Interface
-      -----------------
+         -- GMII Interface
+         -----------------
          phy_resetn            			: out std_logic;
          gmii_txd                      : out std_logic_vector(7 downto 0);
          gmii_tx_en                    : out std_logic;
@@ -106,8 +68,8 @@ architecture wrapper of xv6mac_straight is
           rx_configuration_vector       : in std_logic_vector(79 downto 0);       --Speed,Clk_user,Clk_reg
           tx_configuration_vector       : in std_logic_vector(79 downto 0);
 
-      -- Receiver Interface
-      ----------------------------
+          -- Receiver Interface
+          ----------------------------
           rx_statistics_vector          : out std_logic_vector(27 downto 0);
           rx_statistics_valid           : out std_logic;
 
@@ -118,8 +80,8 @@ architecture wrapper of xv6mac_straight is
           rx_axis_mac_tlast             : out std_logic;
           rx_axis_mac_tuser             : out std_logic;
 
-      -- Transmitter Interface
-      -------------------------------
+          -- Transmitter Interface
+          -------------------------------
           tx_ifg_delay                  : in std_logic_vector(7 downto 0);
           tx_statistics_vector          : out std_logic_vector(31 downto 0);
           tx_statistics_valid           : out std_logic;
@@ -133,13 +95,13 @@ architecture wrapper of xv6mac_straight is
           tx_collision                  : out std_logic;
           tx_retransmit                 : out std_logic;
 
-      -- MAC Control Interface
-      ------------------------
+          -- MAC Control Interface
+          ------------------------
           pause_req                     : in std_logic;
           pause_val                     : in std_logic_vector(15 downto 0);
 
-      -- GMII Interface
-      -----------------
+          -- GMII Interface
+          -----------------
           gmii_txd                      : out std_logic_vector(7 downto 0);       --Txd[7:0]
           gmii_tx_en                    : out std_logic;                          --Tx_en
           gmii_tx_er                    : out std_logic;                          --Tx_er
@@ -151,8 +113,8 @@ architecture wrapper of xv6mac_straight is
           gmii_col                      : in  std_logic;                          --Col
           gmii_crs                      : in  std_logic;                          --Crs
 
-      -- asynchronous reset
-      -----------------
+          -- asynchronous reset
+          -----------------
           glbl_rstn                     : in std_logic;
           rx_axi_rstn                   : in std_logic;
           tx_axi_rstn                   : in std_logic
@@ -160,20 +122,20 @@ architecture wrapper of xv6mac_straight is
         );
   end component;
 
-   ------------------------------------------------------------------------------
-   -- Component Declaration for the Clock generator
-   ------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------
+  -- Component Declaration for the Clock generator
+  ------------------------------------------------------------------------------
 
   component tri_mode_eth_mac_v5_4_clk_wiz
     port (
-      -- Clock in ports
+           -- Clock in ports
            CLK_IN1_P                 : in  std_logic;
            CLK_IN1_N                 : in  std_logic;
-      -- Clock out ports
+           -- Clock out ports
            CLK_OUT1                  : out std_logic;
            CLK_OUT2                  : out std_logic;
            CLK_OUT3                  : out std_logic;
-      -- Status and control signals
+           -- Status and control signals
            RESET                     : in  std_logic;
            LOCKED                    : out std_logic
          );
@@ -203,17 +165,17 @@ architecture wrapper of xv6mac_straight is
          );
   end component;
 
-   ------------------------------------------------------------------------------
-   -- Constants used in this top level wrapper.
-   ------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------
+  -- Constants used in this top level wrapper.
+  ------------------------------------------------------------------------------
   constant BOARD_PHY_ADDR                  : std_logic_vector(7 downto 0)  := "00000111";
 
 
-   ------------------------------------------------------------------------------
-   -- internal signals used in this top level wrapper.
-   ------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------
+  -- internal signals used in this top level wrapper.
+  ------------------------------------------------------------------------------
 
-   -- example design clocks
+  -- example design clocks
   signal gtx_clk_bufg                      : std_logic;
   signal refclk_bufg                       : std_logic;
   signal rx_mac_aclk                       : std_logic;
@@ -228,7 +190,7 @@ architecture wrapper of xv6mac_straight is
 
   signal phy_resetn_int                    : std_logic;
 
-   -- resets (and reset generation)
+  -- resets (and reset generation)
   signal local_chk_reset                   : std_logic;
   signal chk_reset_int                     : std_logic;
   signal chk_pre_resetn                    : std_logic := '0';
@@ -266,7 +228,7 @@ begin
     mac_tx_tvalid, mac_tx_tready_int, tx_full_reg, tx_full_val, set_tx_reg
   )
   begin
-      -- output followers
+    -- output followers
     mac_rx_tdata  <= rx_data_reg;
     mac_rx_tvalid <= rx_tvalid_reg;
     mac_rx_tlast  <= rx_tlast_reg;
@@ -316,16 +278,16 @@ begin
     end if;
   end process;
 
-   ------------------------------------------------------------------------------
-   -- Instantiate the Tri-Mode EMAC Block wrapper
-   ------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------
+  -- Instantiate the Tri-Mode EMAC Block wrapper
+  ------------------------------------------------------------------------------
   v6emac_block : tri_mode_eth_mac_v5_4_block
   port map(
             gtx_clk                 => gtx_clk_bufg,
             rx_configuration_vector => rx_configuration_vector,
             tx_configuration_vector => tx_configuration_vector,
 
-      -- Client Receiver Interface
+            -- Client Receiver Interface
             rx_statistics_vector  => open,
             rx_statistics_valid   => open,
 
@@ -336,7 +298,7 @@ begin
             rx_axis_mac_tlast     => rx_tlast_val,
             rx_axis_mac_tuser     => open,
 
-      -- Client Transmitter Interface
+            -- Client Transmitter Interface
             tx_ifg_delay          => x"00",
             tx_statistics_vector  => open,
             tx_statistics_valid   => open,
@@ -350,11 +312,11 @@ begin
             tx_collision          => open,
             tx_retransmit         => open,
 
-      -- Flow Control
+            -- Flow Control
             pause_req             => '0',
             pause_val             => x"0000",
 
-      -- GMII Interface
+            -- GMII Interface
             gmii_txd              => gmii_txd,
             gmii_tx_en            => gmii_tx_en,
             gmii_tx_er            => gmii_tx_er,
@@ -366,7 +328,7 @@ begin
             gmii_col              => gmii_col,
             gmii_crs              => gmii_crs,
 
-      -- asynchronous reset
+            -- asynchronous reset
             glbl_rstn             => chk_resetn,
             rx_axi_rstn           => '1',
             tx_axi_rstn           => '1'
@@ -374,26 +336,26 @@ begin
 
 
 
-   ------------------------------------------------------------------------------
-   -- Clock logic to generate required clocks from the 200MHz on board
-   -- if 125MHz is available directly this can be removed
-   ------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------
+  -- Clock logic to generate required clocks from the 200MHz on board
+  -- if 125MHz is available directly this can be removed
+  ------------------------------------------------------------------------------
   clock_generator : tri_mode_eth_mac_v5_4_clk_wiz
   port map (
-      -- Clock in ports
+             -- Clock in ports
              CLK_IN1_P         => clk_in_p,
              CLK_IN1_N         => clk_in_n,
-      -- Clock out ports
+             -- Clock out ports
              CLK_OUT1          => gtx_clk_bufg,
              CLK_OUT2          => open,
              CLK_OUT3          => refclk_bufg,
-      -- Status and control signals
+             -- Status and control signals
              RESET             => glbl_rst,
              LOCKED            => dcm_locked
            );
 
-   -----------------
-   -- global reset
+  -----------------
+  -- global reset
   glbl_reset_gen : tri_mode_eth_mac_v5_4_reset_sync
   port map (
              clk               => gtx_clk_bufg,
@@ -416,8 +378,8 @@ begin
 
   local_chk_reset <= glbl_rst or mac_reset;
 
-   -----------------
-   -- data check reset
+  -----------------
+  -- data check reset
   chk_reset_gen : tri_mode_eth_mac_v5_4_reset_sync
   port map (
              clk              => gtx_clk_bufg,
@@ -426,7 +388,7 @@ begin
              reset_out        => chk_reset_int
            );
 
-   -- Create fully synchronous reset in the gtx clock domain.
+  -- Create fully synchronous reset in the gtx clock domain.
   gen_chk_reset : process (gtx_clk_bufg)
   begin
     if gtx_clk_bufg'event and gtx_clk_bufg = '1' then
@@ -441,10 +403,10 @@ begin
   end process gen_chk_reset;
 
 
-   -----------------
-   -- PHY reset
-   -- the phy reset output (active low) needs to be held for at least 10x25MHZ cycles
-   -- this is derived using the 125MHz available and a 6 bit counter
+  -----------------
+  -- PHY reset
+  -- the phy reset output (active low) needs to be held for at least 10x25MHZ cycles
+  -- this is derived using the 125MHz available and a 6 bit counter
   gen_phy_reset : process (gtx_clk_bufg)
   begin
     if gtx_clk_bufg'event and gtx_clk_bufg = '1' then
