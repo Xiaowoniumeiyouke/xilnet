@@ -35,9 +35,9 @@
 //// from http://www.opencores.org/lgpl.shtml                     ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
-//                                                                    
-// CVS Revision History                                               
-//                                                                    
+//
+// CVS Revision History
+//
 // $Log: not supported by cvs2svn $
 // Revision 1.3  2006/01/19 14:07:52  maverickist
 // verification is complete.
@@ -48,7 +48,7 @@
 //
 // Revision 1.1.1.1  2005/12/13 01:51:44  Administrator
 // no message
-// 
+//
 
 module MAC_top(
                 //system signals
@@ -57,7 +57,7 @@ input           Clk_125M                ,
 input           Clk_user                ,
 input           Clk_reg                 ,
 output  [2:0]   Speed                   ,
-                //user interface 
+                //user interface
 output          Rx_mac_ra               ,
 input           Rx_mac_rd               ,
 output  [31:0]  Rx_mac_data             ,
@@ -65,7 +65,7 @@ output  [1:0]   Rx_mac_BE               ,
 output          Rx_mac_pa               ,
 output          Rx_mac_sop              ,
 output          Rx_mac_eop              ,
-                //user interface 
+                //user interface
 output          Tx_mac_wa               ,
 input           Tx_mac_wr               ,
 input   [31:0]  Tx_mac_data             ,
@@ -76,8 +76,8 @@ input           Tx_mac_eop              ,
 input           Pkg_lgth_fifo_rd        ,
 output          Pkg_lgth_fifo_ra        ,
 output  [15:0]  Pkg_lgth_fifo_data      ,
-                //Phy interface          
-                //Phy interface         
+                //Phy interface
+                //Phy interface
 output          Gtx_clk                 ,//used only in GMII mode
 input           Rx_clk                  ,
 input           Tx_clk                  ,//used only in MII mode
@@ -94,16 +94,16 @@ input           CSB                     ,
 input           WRB                     ,
 input   [15:0]  CD_in                   ,
 output  [15:0]  CD_out                  ,
-input   [7:0]   CA                      ,                
+input   [7:0]   CA                      ,
                 //mdx
 output          Mdo,                // MII Management Data Output
 output          MdoEn,              // MII Management Data Output Enable
 input           Mdi,
-output          Mdc                      // MII Management Data Clock       
+output          Mdc                      // MII Management Data Clock
 
-);                       
+);
 //******************************************************************************
-//internal signals                                                              
+//internal signals
 //******************************************************************************
                 //RMON interface
 wire    [15:0]  Rx_pkt_length_rmon      ;
@@ -115,58 +115,58 @@ wire    [15:0]  Tx_pkt_length_rmon      ;
 wire            Tx_apply_rmon           ;
 wire    [2:0]   Tx_pkt_err_type_rmon    ;
                 //PHY interface
-wire            MCrs_dv                 ;       
-wire    [7:0]   MRxD                    ;       
-wire            MRxErr                  ;       
-                //flow_control signals  
-wire    [15:0]  pause_quanta            ;   
-wire            pause_quanta_val        ; 
+wire            MCrs_dv                 ;
+wire    [7:0]   MRxD                    ;
+wire            MRxErr                  ;
+                //flow_control signals
+wire    [15:0]  pause_quanta            ;
+wire            pause_quanta_val        ;
                 //PHY interface
 wire    [7:0]   MTxD                    ;
-wire            MTxEn                   ;   
+wire            MTxEn                   ;
 wire            MCRS                    ;
                 //interface clk signals
 wire            MAC_tx_clk              ;
 wire            MAC_rx_clk              ;
 wire            MAC_tx_clk_div          ;
 wire            MAC_rx_clk_div          ;
-                //reg signals   
-wire    [4:0]	Tx_Hwmark				;       
-wire    [4:0]	Tx_Lwmark				;       
-wire    		pause_frame_send_en		;       
-wire    [15:0]	pause_quanta_set		;       
-wire    		MAC_tx_add_en			;       
-wire    		FullDuplex         		;       
-wire    [3:0]	MaxRetry	        	;       
-wire    [5:0]	IFGset					;       
-wire    [7:0]	MAC_tx_add_prom_data	;       
-wire    [2:0]	MAC_tx_add_prom_add		;       
-wire    		MAC_tx_add_prom_wr		;       
-wire    		tx_pause_en				;       
-wire    		xoff_cpu	        	;       
-wire    		xon_cpu	            	;       
-		        //Rx host interface 	 
-wire    		MAC_rx_add_chk_en		;       
-wire    [7:0]	MAC_rx_add_prom_data	;       
-wire    [2:0]	MAC_rx_add_prom_add		;       
-wire    		MAC_rx_add_prom_wr		;       
-wire    		broadcast_filter_en	    ;       
-wire    [15:0]	broadcast_MAX	        ;       
-wire    		RX_APPEND_CRC			;       
-wire    [4:0]	Rx_Hwmark			    ;           
-wire    [4:0]	Rx_Lwmark			    ;           
-wire    		CRC_chk_en				;       
-wire    [5:0]	RX_IFG_SET	  			;       
+                //reg signals
+wire    [4:0]	Tx_Hwmark				;
+wire    [4:0]	Tx_Lwmark				;
+wire    		pause_frame_send_en		;
+wire    [15:0]	pause_quanta_set		;
+wire    		MAC_tx_add_en			;
+wire    		FullDuplex         		;
+wire    [3:0]	MaxRetry	        	;
+wire    [5:0]	IFGset					;
+wire    [7:0]	MAC_tx_add_prom_data	;
+wire    [2:0]	MAC_tx_add_prom_add		;
+wire    		MAC_tx_add_prom_wr		;
+wire    		tx_pause_en				;
+wire    		xoff_cpu	        	;
+wire    		xon_cpu	            	;
+		        //Rx host interface
+wire    		MAC_rx_add_chk_en		;
+wire    [7:0]	MAC_rx_add_prom_data	;
+wire    [2:0]	MAC_rx_add_prom_add		;
+wire    		MAC_rx_add_prom_wr		;
+wire    		broadcast_filter_en	    ;
+wire    [15:0]	broadcast_MAX	        ;
+wire    		RX_APPEND_CRC			;
+wire    [4:0]	Rx_Hwmark			    ;
+wire    [4:0]	Rx_Lwmark			    ;
+wire    		CRC_chk_en				;
+wire    [5:0]	RX_IFG_SET	  			;
 wire    [15:0]	RX_MAX_LENGTH 			;
 wire    [6:0]	RX_MIN_LENGTH			;
-		        		//RMON host interface    
+		        		//RMON host interface
 wire    [5:0]	CPU_rd_addr				;
 wire    		CPU_rd_apply			;
 wire    		CPU_rd_grant			;
 wire    [31:0]	CPU_rd_dout				;
-		        		//Phy int host interface 
+		        		//Phy int host interface
 wire    		Line_loop_en			;
-		        		//MII to CPU             
+		        		//MII to CPU
 wire    [7:0] 	Divider            		;
 wire    [15:0] 	CtrlData           		;
 wire    [4:0] 	Rgad               		;
@@ -189,45 +189,45 @@ wire            Pkg_lgth_fifo_empty;
 reg             rx_pkg_lgth_fifo_wr_tmp;
 reg             rx_pkg_lgth_fifo_wr_tmp_pl1;
 reg             rx_pkg_lgth_fifo_wr;
-              
+
 //******************************************************************************
-//internal signals                                                              
+//internal signals
 //******************************************************************************
 MAC_rx U_MAC_rx(
-.Reset                      (Reset                      ),    
-.Clk_user                   (Clk_user                   ), 
-.Clk                        (MAC_rx_clk_div             ), 
- //RMII interface           (//PHY interface            ),  
-.MCrs_dv                    (MCrs_dv                    ),        
+.Reset                      (Reset                      ),
+.Clk_user                   (Clk_user                   ),
+.Clk                        (MAC_rx_clk_div             ),
+ //RMII interface           (//PHY interface            ),
+.MCrs_dv                    (MCrs_dv                    ),
 .MRxD                       (MRxD                       ),
 .MRxErr                     (MRxErr                     ),
- //flow_control signals     (//flow_control signals     ),  
+ //flow_control signals     (//flow_control signals     ),
 .pause_quanta               (pause_quanta               ),
 .pause_quanta_val           (pause_quanta_val           ),
- //user interface           (//user interface           ),  
+ //user interface           (//user interface           ),
 .Rx_mac_ra                  (Rx_mac_ra                  ),
 .Rx_mac_rd                  (Rx_mac_rd                  ),
-.Rx_mac_data                (Rx_mac_data                ),       
+.Rx_mac_data                (Rx_mac_data                ),
 .Rx_mac_BE                  (Rx_mac_BE                  ),
 .Rx_mac_pa                  (Rx_mac_pa                  ),
 .Rx_mac_sop                 (Rx_mac_sop                 ),
 .Rx_mac_eop                 (Rx_mac_eop                 ),
- //CPU                      (//CPU                      ),  
+ //CPU                      (//CPU                      ),
 .MAC_rx_add_chk_en          (MAC_rx_add_chk_en          ),
 .MAC_add_prom_data          (MAC_rx_add_prom_data       ),
 .MAC_add_prom_add           (MAC_rx_add_prom_add        ),
-.MAC_add_prom_wr            (MAC_rx_add_prom_wr         ),       
-.broadcast_filter_en        (broadcast_filter_en        ),       
-.broadcast_bucket_depth     (broadcast_bucket_depth     ),           
+.MAC_add_prom_wr            (MAC_rx_add_prom_wr         ),
+.broadcast_filter_en        (broadcast_filter_en        ),
+.broadcast_bucket_depth     (broadcast_bucket_depth     ),
 .broadcast_bucket_interval  (broadcast_bucket_interval  ),
-.RX_APPEND_CRC              (RX_APPEND_CRC              ), 
+.RX_APPEND_CRC              (RX_APPEND_CRC              ),
 .Rx_Hwmark                  (Rx_Hwmark                  ),
 .Rx_Lwmark                  (Rx_Lwmark                  ),
-.CRC_chk_en                 (CRC_chk_en                 ),  
+.CRC_chk_en                 (CRC_chk_en                 ),
 .RX_IFG_SET                 (RX_IFG_SET                 ),
 .RX_MAX_LENGTH              (RX_MAX_LENGTH              ),
 .RX_MIN_LENGTH              (RX_MIN_LENGTH              ),
- //RMON interface           (//RMON interface           ),  
+ //RMON interface           (//RMON interface           ),
 .Rx_pkt_length_rmon         (Rx_pkt_length_rmon         ),
 .Rx_apply_rmon              (Rx_apply_rmon              ),
 .Rx_pkt_err_type_rmon       (Rx_pkt_err_type_rmon       ),
@@ -278,25 +278,25 @@ MAC_tx U_MAC_tx(
 assign Pkg_lgth_fifo_ra=!Pkg_lgth_fifo_empty;
 always @ (posedge Reset or posedge MAC_rx_clk_div)
     if (Reset)
-        rx_pkg_lgth_fifo_wr_tmp <=0;    
+        rx_pkg_lgth_fifo_wr_tmp <=0;
     else if(Rx_apply_rmon&&Rx_pkt_err_type_rmon==3'b100)
         rx_pkg_lgth_fifo_wr_tmp <=1;
     else
-        rx_pkg_lgth_fifo_wr_tmp <=0;  
+        rx_pkg_lgth_fifo_wr_tmp <=0;
 
 always @ (posedge Reset or posedge MAC_rx_clk_div)
     if (Reset)
-        rx_pkg_lgth_fifo_wr_tmp_pl1 <=0;    
+        rx_pkg_lgth_fifo_wr_tmp_pl1 <=0;
     else
-        rx_pkg_lgth_fifo_wr_tmp_pl1 <=rx_pkg_lgth_fifo_wr_tmp;         
+        rx_pkg_lgth_fifo_wr_tmp_pl1 <=rx_pkg_lgth_fifo_wr_tmp;
 
 always @ (posedge Reset or posedge MAC_rx_clk_div)
     if (Reset)
-        rx_pkg_lgth_fifo_wr <=0;    
+        rx_pkg_lgth_fifo_wr <=0;
     else if(rx_pkg_lgth_fifo_wr_tmp&!rx_pkg_lgth_fifo_wr_tmp_pl1)
-        rx_pkg_lgth_fifo_wr <=1; 
+        rx_pkg_lgth_fifo_wr <=1;
     else
-        rx_pkg_lgth_fifo_wr <=0; 
+        rx_pkg_lgth_fifo_wr <=0;
 
 afifo U_rx_pkg_lgth_fifo (
 .din                        (RX_APPEND_CRC?Rx_pkt_length_rmon:Rx_pkt_length_rmon-4),
@@ -377,32 +377,32 @@ Clk_ctrl U_Clk_ctrl(
 .MAC_rx_clk_div             (MAC_rx_clk_div             )
 );
 
-eth_miim U_eth_miim(                                        
-.Clk                        (Clk_reg                    ),  
-.Reset                      (Reset                      ),  
-.Divider                    (Divider                    ),  
-.NoPre                      (NoPre                      ),  
-.CtrlData                   (CtrlData                   ),  
-.Rgad                       (Rgad                       ),  
-.Fiad                       (Fiad                       ),  
-.WCtrlData                  (WCtrlData                  ),  
-.RStat                      (RStat                      ),  
-.ScanStat                   (ScanStat                   ),  
+eth_miim U_eth_miim(
+.Clk                        (Clk_reg                    ),
+.Reset                      (Reset                      ),
+.Divider                    (Divider                    ),
+.NoPre                      (NoPre                      ),
+.CtrlData                   (CtrlData                   ),
+.Rgad                       (Rgad                       ),
+.Fiad                       (Fiad                       ),
+.WCtrlData                  (WCtrlData                  ),
+.RStat                      (RStat                      ),
+.ScanStat                   (ScanStat                   ),
 .Mdo                        (Mdo                        ),
 .MdoEn                      (MdoEn                      ),
 .Mdi                        (Mdi                        ),
-.Mdc                        (Mdc                        ),  
-.Busy                       (Busy                       ),  
-.Prsd                       (Prsd                       ),  
-.LinkFail                   (LinkFail                   ),  
-.Nvalid                     (Nvalid                     ),  
-.WCtrlDataStart             (WCtrlDataStart             ),  
-.RStatStart                 (RStatStart                 ),  
-.UpdateMIIRX_DATAReg        (UpdateMIIRX_DATAReg        )); 
+.Mdc                        (Mdc                        ),
+.Busy                       (Busy                       ),
+.Prsd                       (Prsd                       ),
+.LinkFail                   (LinkFail                   ),
+.Nvalid                     (Nvalid                     ),
+.WCtrlDataStart             (WCtrlDataStart             ),
+.RStatStart                 (RStatStart                 ),
+.UpdateMIIRX_DATAReg        (UpdateMIIRX_DATAReg        ));
 
 Reg_int U_Reg_int(
-.Reset	               		(Reset	                  	),    
-.Clk_reg                  	(Clk_reg                 	), 
+.Reset	               		(Reset	                  	),
+.Clk_reg                  	(Clk_reg                 	),
 .CSB                        (CSB                        ),
 .WRB                        (WRB                        ),
 .CD_in                      (CD_in                      ),
@@ -429,9 +429,9 @@ Reg_int U_Reg_int(
 .MAC_rx_add_prom_add		(MAC_rx_add_prom_add		),
 .MAC_rx_add_prom_wr		    (MAC_rx_add_prom_wr		    ),
 .broadcast_filter_en	    (broadcast_filter_en	    ),
-.broadcast_bucket_depth     (broadcast_bucket_depth     ),           
+.broadcast_bucket_depth     (broadcast_bucket_depth     ),
 .broadcast_bucket_interval  (broadcast_bucket_interval  ),
-.RX_APPEND_CRC			    (RX_APPEND_CRC			    ), 
+.RX_APPEND_CRC			    (RX_APPEND_CRC			    ),
 .Rx_Hwmark       			(Rx_Hwmark					),
 .Rx_Lwmark                  (Rx_Lwmark                  ),
 .CRC_chk_en				    (CRC_chk_en				    ),
