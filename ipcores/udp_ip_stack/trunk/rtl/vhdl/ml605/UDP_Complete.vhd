@@ -136,8 +136,6 @@ architecture structural of UDP_Complete is
            mac_reset                    : in  std_logic;              -- reset mac layer
            clk_in_p                   : in  std_logic;              -- 200MHz clock input from board
            clk_in_n                   : in  std_logic;
-           rx_configuration_vector    : in std_logic_vector(79 downto 0);
-           tx_configuration_vector    : in std_logic_vector(79 downto 0);
 
       -- MAC Transmitter (AXI-S) Interface
       ---------------------------------------------
@@ -196,45 +194,7 @@ architecture structural of UDP_Complete is
   signal mac_tx_tready_int  : std_logic;
   signal mac_tx_granted_int : std_logic;
 
-  signal rx_config : std_logic_vector(79 downto 0);
-  signal tx_config : std_logic_vector(79 downto 0);
-
 begin
-
-  -- hard code config values
-  tx_config(0) <= '0'; --reset
-  tx_config(1) <= '1'; --en
-  tx_config(2) <= '0'; --vlan en
-  tx_config(3) <= '0'; --fcs en
-  tx_config(4) <= '0'; --jumbo
-  tx_config(5) <= '1'; --flow en
-  tx_config(6) <= '1'; --half duplex
-  tx_config(7) <= '0';
-  tx_config(8) <= '0'; --interframe gap en
-  tx_config(11 downto 0) <= (others => '0');
-  tx_config(13 downto 12) <= "10"; --10=gigabit
-  tx_config(14) <= '0'; --max frame en
-  tx_config(15) <= '0';
-  tx_config(31 downto 16) <= x"05ee"; --1518
-  tx_config(79 downto 32) <= our_mac_address;
-
-  rx_config(0) <= '0'; --reset
-  rx_config(1) <= '1'; --en
-  rx_config(2) <= '0'; --vlan en
-  rx_config(3) <= '0'; --fcs en
-  rx_config(4) <= '0'; --jumbo
-  rx_config(5) <= '1'; --flow en
-  rx_config(6) <= '1'; --half duplex
-  rx_config(7) <= '0';
-  rx_config(8) <= '0'; --type check disable
-  rx_config(9) <= '0'; --control length check disable
-  rx_config(10) <= '0';
-  rx_config(11) <= '0'; --promiscious mode
-  rx_config(13 downto 12) <= "10";
-  rx_config(14) <= '0'; --max frame en
-  rx_config(15) <= '0';
-  rx_config(31 downto 16) <= x"05ee";
-  rx_config(79 downto 32) <= our_mac_address;
 
   process (mac_tx_clock)
   begin
@@ -299,9 +259,6 @@ begin
             mac_reset         => '0',
             clk_in_p          => clk_in_p,
             clk_in_n          => clk_in_n,
-
-            rx_configuration_vector => rx_config,
-            tx_configuration_vector => tx_config,
 
         -- MAC Transmitter (AXI-S) Interface
         ---------------------------------------------

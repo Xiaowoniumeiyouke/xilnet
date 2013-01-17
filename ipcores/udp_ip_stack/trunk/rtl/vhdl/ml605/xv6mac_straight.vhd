@@ -17,32 +17,30 @@ entity xv6mac_straight is
   port (
          -- System controls
          ------------------
-         glbl_rst                      : in  std_logic;	      				-- asynchronous reset
-         mac_reset                   	: in  std_logic;							-- reset mac layer
-         clk_in_p              			: in  std_logic;     	 				-- 200MHz clock input from board
-         clk_in_n              			: in  std_logic;
-         tx_configuration_vector     : in std_logic_vector(79 downto 0);
-         rx_configuration_vector     : in std_logic_vector(79 downto 0);
+         glbl_rst                      : in  std_logic;               -- asynchronous reset
+         mac_reset                    : in  std_logic;              -- reset mac layer
+         clk_in_p                   : in  std_logic;              -- 200MHz clock input from board
+         clk_in_n                   : in  std_logic;
 
          -- MAC Transmitter (AXI-S) Interface
          ---------------------------------------------
-         mac_tx_clock              		: out  std_logic;							-- data sampled on rising edge
-         mac_tx_tdata         			: in  std_logic_vector(7 downto 0);	-- data byte to tx
-         mac_tx_tvalid        			: in  std_logic;							-- tdata is valid
-         mac_tx_tready        			: out std_logic;							-- mac is ready to accept data
-         mac_tx_tlast         			: in  std_logic;							-- indicates last byte of frame
+         mac_tx_clock                 : out  std_logic;             -- data sampled on rising edge
+         mac_tx_tdata               : in  std_logic_vector(7 downto 0); -- data byte to tx
+         mac_tx_tvalid              : in  std_logic;              -- tdata is valid
+         mac_tx_tready              : out std_logic;              -- mac is ready to accept data
+         mac_tx_tlast               : in  std_logic;              -- indicates last byte of frame
 
          -- MAC Receiver (AXI-S) Interface
          ------------------------------------------
-         mac_rx_clock              		: out  std_logic;							-- data valid on rising edge
-         mac_rx_tdata         			: out std_logic_vector(7 downto 0);	-- data byte received
-         mac_rx_tvalid        			: out std_logic;							-- indicates tdata is valid
-         mac_rx_tready        			: in  std_logic;							-- tells mac that we are ready to take data
-         mac_rx_tlast         			: out std_logic;							-- indicates last byte of the trame
+         mac_rx_clock                 : out  std_logic;             -- data valid on rising edge
+         mac_rx_tdata               : out std_logic_vector(7 downto 0); -- data byte received
+         mac_rx_tvalid              : out std_logic;              -- indicates tdata is valid
+         mac_rx_tready              : in  std_logic;              -- tells mac that we are ready to take data
+         mac_rx_tlast               : out std_logic;              -- indicates last byte of the trame
 
          -- GMII Interface
          -----------------
-         phy_resetn            			: out std_logic;
+         phy_resetn                    : out std_logic;
          gmii_txd                      : out std_logic_vector(7 downto 0);
          gmii_tx_en                    : out std_logic;
          gmii_tx_er                    : out std_logic;
@@ -53,124 +51,74 @@ entity xv6mac_straight is
          gmii_rx_clk                   : in  std_logic;
          gmii_col                      : in  std_logic;
          gmii_crs                      : in  std_logic;
-         mii_tx_clk                    : in  std_logic
+         gmii_gtx_clk                  : out std_logic;
+         phy_int                       : in std_logic;
+         phy_mdc                       : out std_logic;
+         phy_mdio                      : inout std_logic
        );
 end xv6mac_straight;
 
 architecture wrapper of xv6mac_straight is
 
-  ------------------------------------------------------------------------------
-  -- Component declaration for the internal mac layer
-  ------------------------------------------------------------------------------
-  component tri_mode_eth_mac_v5_4_block
-    port(
-          gtx_clk                       : in std_logic;                           --Clk_125M
-          rx_configuration_vector       : in std_logic_vector(79 downto 0);       --Speed,Clk_user,Clk_reg
-          tx_configuration_vector       : in std_logic_vector(79 downto 0);
+  component MAC_top
+        --System
+        Reset : IN std_logic;
+        Clk_125M : IN std_logic;
+        Clk_user : IN std_logic;
+        Clk_reg : IN std_logic;
+        Speed : OUT std_logic_vector(2 downto 0);
 
-          -- Receiver Interface
-          ----------------------------
-          rx_statistics_vector          : out std_logic_vector(27 downto 0);
-          rx_statistics_valid           : out std_logic;
+        --User interface
+        Rx_mac_ra : OUT std_logic;
+        Rx_mac_rd : IN std_logic;
+        Rx_mac_data : OUT std_logic_vector(31 downto 0);
+        Rx_mac_BE : OUT std_logic_vector(1 downto 0);
+        Rx_mac_pa : OUT std_logic;
+        Rx_mac_sop : OUT std_logic;
+        Rx_mac_eop : OUT std_logic;
 
-          rx_mac_aclk                   : out std_logic;
-          rx_reset                      : out std_logic;
-          rx_axis_mac_tdata             : out std_logic_vector(7 downto 0);
-          rx_axis_mac_tvalid            : out std_logic;
-          rx_axis_mac_tlast             : out std_logic;
-          rx_axis_mac_tuser             : out std_logic;
+        Tx_mac_wa : OUT std_logic;
+        Tx_mac_wr : IN std_logic;
+        Tx_mac_data : IN std_logic_vector(31 downto 0);
+        Tx_mac_BE : IN std_logic_vector(1 downto 0);
+        Tx_mac_sop : IN std_logic;
+        Tx_mac_eop : IN std_logic;
 
-          -- Transmitter Interface
-          -------------------------------
-          tx_ifg_delay                  : in std_logic_vector(7 downto 0);
-          tx_statistics_vector          : out std_logic_vector(31 downto 0);
-          tx_statistics_valid           : out std_logic;
+        --Pkt Length FIFO
+        Pkg_lgth_fifo_rd : IN std_logic;
+        Pkg_lgth_fifo_ra : OUT std_logic;
+        Pkg_lgth_fifo_data : OUT std_logic_vector(15 downto 0);
 
-          tx_reset                      : out std_logic;
-          tx_axis_mac_tdata             : in std_logic_vector(7 downto 0);
-          tx_axis_mac_tvalid            : in std_logic;
-          tx_axis_mac_tlast             : in std_logic;
-          tx_axis_mac_tuser             : in std_logic;
-          tx_axis_mac_tready            : out std_logic;
-          tx_collision                  : out std_logic;
-          tx_retransmit                 : out std_logic;
+        --GMII
+        Rx_clk : IN std_logic;
+        Rx_er : IN std_logic;
+        Rx_dv : IN std_logic;
+        Rxd : IN std_logic_vector(7 downto 0);
+        Tx_clk : IN std_logic;
+        Tx_er : OUT std_logic;
+        Tx_en : OUT std_logic;
+        Txd : OUT std_logic_vector(7 downto 0);
+        Crs : IN std_logic;
+        Col : IN std_logic;
+        Gtx_clk : OUT std_logic;
 
-          -- MAC Control Interface
-          ------------------------
-          pause_req                     : in std_logic;
-          pause_val                     : in std_logic_vector(15 downto 0);
+        --Host interface
+        CSB : IN std_logic;
+        WRB : IN std_logic;
+        CD_in : IN std_logic_vector(15 downto 0);
+        CD_out : OUT std_logic_vector(15 downto 0);
+        CA : IN std_logic_vector(7 downto 0);
 
-          -- GMII Interface
-          -----------------
-          gmii_txd                      : out std_logic_vector(7 downto 0);       --Txd[7:0]
-          gmii_tx_en                    : out std_logic;                          --Tx_en
-          gmii_tx_er                    : out std_logic;                          --Tx_er
-          gmii_tx_clk                   : out std_logic;                          --Tx_clk
-          gmii_rxd                      : in std_logic_vector(7 downto 0);        --Rxd[7:0]
-          gmii_rx_dv                    : in std_logic;                           --Rx_dv
-          gmii_rx_er                    : in std_logic;                           --Rx_er
-          gmii_rx_clk                   : in std_logic;                           --Rx_clk
-          gmii_col                      : in  std_logic;                          --Col
-          gmii_crs                      : in  std_logic;                          --Crs
+        --MDIO interface
+        Mdi : IN std_logic;
+        Mdo : OUT std_logic;
+        MdoEn : OUT std_logic;
+        Mdc : OUT std_logic
+      );
 
-          -- asynchronous reset
-          -----------------
-          glbl_rstn                     : in std_logic;
-          rx_axi_rstn                   : in std_logic;
-          tx_axi_rstn                   : in std_logic
+  end component MAC_top;
 
-        );
-  end component;
-
-  ------------------------------------------------------------------------------
-  -- Component Declaration for the Clock generator
-  ------------------------------------------------------------------------------
-
-  component tri_mode_eth_mac_v5_4_clk_wiz
-    port (
-           -- Clock in ports
-           CLK_IN1_P                 : in  std_logic;
-           CLK_IN1_N                 : in  std_logic;
-           -- Clock out ports
-           CLK_OUT1                  : out std_logic;
-           CLK_OUT2                  : out std_logic;
-           CLK_OUT3                  : out std_logic;
-           -- Status and control signals
-           RESET                     : in  std_logic;
-           LOCKED                    : out std_logic
-         );
-  end component;
-
-
-  ------------------------------------------------------------------------------
-  -- Component declaration for the reset synchroniser
-  ------------------------------------------------------------------------------
-  component tri_mode_eth_mac_v5_4_reset_sync
-    port (
-           reset_in                   : in  std_logic;    -- Active high asynchronous reset
-           enable                     : in  std_logic;
-           clk                        : in  std_logic;    -- clock to be sync'ed to
-           reset_out                  : out std_logic     -- "Synchronised" reset signal
-         );
-  end component;
-
-  ------------------------------------------------------------------------------
-  -- Component declaration for the synchroniser
-  ------------------------------------------------------------------------------
-  component sync_block_v2_2
-    port (
-           clk                        : in  std_logic;
-           data_in                    : in  std_logic;
-           data_out                   : out std_logic
-         );
-  end component;
-
-  ------------------------------------------------------------------------------
-  -- Constants used in this top level wrapper.
-  ------------------------------------------------------------------------------
   constant BOARD_PHY_ADDR                  : std_logic_vector(7 downto 0)  := "00000111";
-
-
   ------------------------------------------------------------------------------
   -- internal signals used in this top level wrapper.
   ------------------------------------------------------------------------------
@@ -181,12 +129,12 @@ architecture wrapper of xv6mac_straight is
   signal rx_mac_aclk                       : std_logic;
 
   -- tx handshaking
-  signal mac_tx_tready_int						: std_logic;
-  signal tx_full_reg								: std_logic;
-  signal tx_full_val								: std_logic;
-  signal tx_data_reg								: std_logic_vector(7 downto 0);
-  signal tx_last_reg								: std_logic;
-  signal set_tx_reg									: std_logic;
+  signal mac_tx_tready_int            : std_logic;
+  signal tx_full_reg                : std_logic;
+  signal tx_full_val                : std_logic;
+  signal tx_data_reg                : std_logic_vector(7 downto 0);
+  signal tx_last_reg                : std_logic;
+  signal set_tx_reg                 : std_logic;
 
   signal phy_resetn_int                    : std_logic;
 
@@ -202,18 +150,23 @@ architecture wrapper of xv6mac_straight is
   signal glbl_rst_intn                     : std_logic;
 
   -- pipeline register for RX signals
-  signal rx_data_val								: std_logic_vector(7 downto 0);
-  signal rx_tvalid_val								: std_logic;
-  signal rx_tlast_val								: std_logic;
-  signal rx_data_reg								: std_logic_vector(7 downto 0);
-  signal rx_tvalid_reg								: std_logic;
-  signal rx_tlast_reg								: std_logic;
+  signal rx_data_val                : std_logic_vector(7 downto 0);
+  signal rx_tvalid_val                : std_logic;
+  signal rx_tlast_val               : std_logic;
+  signal rx_data_reg                : std_logic_vector(7 downto 0);
+  signal rx_tvalid_reg                : std_logic;
+  signal rx_tlast_reg               : std_logic;
 
   attribute keep : string;
   attribute keep of gtx_clk_bufg             : signal is "true";
   attribute keep of refclk_bufg              : signal is "true";
   attribute keep of mac_tx_tready_int        : signal is "true";
-  attribute keep of tx_full_reg        		: signal is "true";
+  attribute keep of tx_full_reg           : signal is "true";
+
+  -- MDIO handling
+  signal phy_mdi_int  : std_logic;
+  signal phy_mdo_int  : std_logic;
+  signal phy_mden_int : std_logic;
 
 
 ------------------------------------------------------------------------------
@@ -221,6 +174,10 @@ architecture wrapper of xv6mac_straight is
 ------------------------------------------------------------------------------
 
 begin
+
+  --MDIO
+  phy_mdio <= phy_mdo_int when phy_mdoen_int = '1' else 'Z';
+  phy_mdi_int <= phy_mdio;
 
   -- begin proceses
   combinatorial: process (
@@ -232,7 +189,7 @@ begin
     mac_rx_tdata  <= rx_data_reg;
     mac_rx_tvalid <= rx_tvalid_reg;
     mac_rx_tlast  <= rx_tlast_reg;
-    mac_tx_tready <= not (tx_full_reg and not mac_tx_tready_int);		-- if not full, we are ready to accept
+    mac_tx_tready <= not (tx_full_reg and not mac_tx_tready_int);   -- if not full, we are ready to accept
 
     -- control defaults
     tx_full_val <= tx_full_reg;
@@ -279,90 +236,63 @@ begin
   end process;
 
   ------------------------------------------------------------------------------
-  -- Instantiate the Tri-Mode EMAC Block wrapper
+  -- Instantiate the Ethernet wrapper
   ------------------------------------------------------------------------------
-  v6emac_block : tri_mode_eth_mac_v5_4_block
-  port map(
-            gtx_clk                 => gtx_clk_bufg,
-            rx_configuration_vector => rx_configuration_vector,
-            tx_configuration_vector => tx_configuration_vector,
+  mac_block : MAC_top
+  port (
+        Reset              => phy_resetn_int,
+        Clk_125M           => clk_125,
+        Clk_user           => clk_66,
+        Clk_reg            => clk_80, --Or clk_66
+        Speed              => open,
 
-            -- Client Receiver Interface
-            rx_statistics_vector  => open,
-            rx_statistics_valid   => open,
+        --TODO: define this conversion somehow...
+        Rx_mac_ra          => mac_rx_tvalid,
+        Rx_mac_rd          => mac_rx_tready,
+        Rx_mac_data(7 downto 0)  => mac_rx_tdata,
+        Rx_mac_data(13 downto 8) => open,
+        Rx_mac_BE          => open,
+        Rx_mac_pa          => open,
+        Rx_mac_sop         => open,
+        Rx_mac_eop         => mac_rx_tlast,
 
-            rx_mac_aclk           => open,
-            rx_reset              => open,
-            rx_axis_mac_tdata     => rx_data_val,
-            rx_axis_mac_tvalid    => rx_tvalid_val,
-            rx_axis_mac_tlast     => rx_tlast_val,
-            rx_axis_mac_tuser     => open,
+        Tx_mac_wa          => mac_tx_tready,
+        Tx_mac_wr          => mac_tx_tvalid,
+        Tx_mac_data(7 downto 0) => mac_tx_tdata,
+        Tx_mac_data(31 downto 8) => (others => '0'),
+        Tx_mac_BE          => "01",
+        Tx_mac_sop         => '0',
+        Tx_mac_eop         => mac_tx_tlast,
 
-            -- Client Transmitter Interface
-            tx_ifg_delay          => x"00",
-            tx_statistics_vector  => open,
-            tx_statistics_valid   => open,
+        Pkg_lgth_fifo_rd   => '0',
+        Pkg_lgth_fifo_ra   => open,
+        Pkg_lgth_fifo_data => open,
 
-            tx_reset              => open,
-            tx_axis_mac_tdata     => tx_data_reg,
-            tx_axis_mac_tvalid    => tx_full_reg,
-            tx_axis_mac_tlast     => tx_last_reg,
-            tx_axis_mac_tuser     => '0',
-            tx_axis_mac_tready    => mac_tx_tready_int,
-            tx_collision          => open,
-            tx_retransmit         => open,
+        Rx_clk             => gmii_rx_clk,
+        Rx_er              => gmii_rx_er,
+        Rx_dv              => gmii_rx_dv,
+        Rxd                => gmii_rxd,
+        Tx_clk             => gmii_tx_clk,
+        Tx_er              => gmii_tx_er,
+        Tx_en              => gmii_tx_en,
+        Txd                => gmii_txd,
+        Crs                => gmii_crs,
+        Col                => gmii_col,
+        Gtx_clk            => gmii_gtx_clk,
 
-            -- Flow Control
-            pause_req             => '0',
-            pause_val             => x"0000",
+        CSB                => '0',
+        WRB                => '0',
+        CD_in              => (others => '0'),
+        CD_out             => open,
+        CA                 => (others => '0');
 
-            -- GMII Interface
-            gmii_txd              => gmii_txd,
-            gmii_tx_en            => gmii_tx_en,
-            gmii_tx_er            => gmii_tx_er,
-            gmii_tx_clk           => gmii_tx_clk,
-            gmii_rxd              => gmii_rxd,
-            gmii_rx_dv            => gmii_rx_dv,
-            gmii_rx_er            => gmii_rx_er,
-            gmii_rx_clk           => gmii_rx_clk,
-            gmii_col              => gmii_col,
-            gmii_crs              => gmii_crs,
+        Mdi                => phy_mdi_int,
+        Mdo                => phy_mdo_int,
+        MdoEn              => phy_mdoen_int,
+        Mdc                => phy_mdc
+       );
 
-            -- asynchronous reset
-            glbl_rstn             => chk_resetn,
-            rx_axi_rstn           => '1',
-            tx_axi_rstn           => '1'
-          );
-
-
-
-  ------------------------------------------------------------------------------
-  -- Clock logic to generate required clocks from the 200MHz on board
-  -- if 125MHz is available directly this can be removed
-  ------------------------------------------------------------------------------
-  clock_generator : tri_mode_eth_mac_v5_4_clk_wiz
-  port map (
-             -- Clock in ports
-             CLK_IN1_P         => clk_in_p,
-             CLK_IN1_N         => clk_in_n,
-             -- Clock out ports
-             CLK_OUT1          => gtx_clk_bufg,
-             CLK_OUT2          => open,
-             CLK_OUT3          => refclk_bufg,
-             -- Status and control signals
-             RESET             => glbl_rst,
-             LOCKED            => dcm_locked
-           );
-
-  -----------------
-  -- global reset
-  glbl_reset_gen : tri_mode_eth_mac_v5_4_reset_sync
-  port map (
-             clk               => gtx_clk_bufg,
-             enable            => dcm_locked,
-             reset_in          => glbl_rst,
-             reset_out         => glbl_rst_int
-           );
+  --TODO: generate clocks
 
   glbl_rst_intn <= not glbl_rst_int;
 
