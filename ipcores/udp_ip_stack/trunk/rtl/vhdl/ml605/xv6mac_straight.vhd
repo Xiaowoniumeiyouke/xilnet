@@ -61,6 +61,7 @@ end xv6mac_straight;
 architecture wrapper of xv6mac_straight is
 
   component MAC_top
+    Port(
         --System
         Reset : IN std_logic;
         Clk_125M : IN std_logic;
@@ -239,7 +240,7 @@ begin
   -- Instantiate the Ethernet wrapper
   ------------------------------------------------------------------------------
   mac_block : MAC_top
-  port (
+  port map(
         Reset              => phy_resetn_int,
         Clk_125M           => clk_125,
         Clk_user           => clk_66,
@@ -284,7 +285,7 @@ begin
         WRB                => '0',
         CD_in              => (others => '0'),
         CD_out             => open,
-        CA                 => (others => '0');
+        CA                 => (others => '0'),
 
         Mdi                => phy_mdi_int,
         Mdo                => phy_mdo_int,
