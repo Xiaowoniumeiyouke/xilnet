@@ -328,6 +328,21 @@ begin
     end if;
   end process;
 
+  -- Interface conversion 'mac <-> AXI-S'
+  rxinterface : process
+  begin
+    rx_mac_ra <= mac_rx_tvalid;
+    rx_mac_rd <= mac_rx_tready;
+    rx_mac_eop <= mac_rx_tlast;
+  end process;
+
+  txinterface : process
+  begin
+    tx_mac_wa <= mac_tx_tready;
+    tx_mac_wr <= mac_tx_tvalid;
+    tx_mac_eop <= mac_tx_tlast;
+  end process;
+
   ------------------------------------------------------------------------------
   -- Instantiate the Ethernet wrapper
   ------------------------------------------------------------------------------

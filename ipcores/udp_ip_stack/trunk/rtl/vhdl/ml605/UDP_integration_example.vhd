@@ -195,9 +195,9 @@ begin
            );
 
   ila_trig(3 downto 0) <= display_out;
-  ila_trig(5 downto 6) <= udp_tx_result_int;
-  ila_trig(7) <= udp_tx_data_out_ready_int;
-  ila_trig(13 downto 8) <= arp_pkt_count_int(5 downto 0);
+  ila_trig(5 downto 4) <= udp_tx_result_int;
+  ila_trig(6) <= udp_tx_data_out_ready_int;
+  ila_trig(13 downto 7) <= arp_pkt_count_int(6 downto 0);
   ila_trig(19 downto 14) <= ip_pkt_count_int(5 downto 0);
 
   Inst_top_ila : top_ila
