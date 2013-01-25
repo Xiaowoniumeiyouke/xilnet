@@ -69,7 +69,7 @@ output          Rx_mac_eop              ,
 output          Tx_mac_wa               ,
 input           Tx_mac_wr               ,
 input   [31:0]  Tx_mac_data             ,
-input   [1:0]   Tx_mac_BE               ,//big endian
+input   [1:0]   Tx_mac_BE               ,//byte enable
 input           Tx_mac_sop              ,
 input           Tx_mac_eop              ,
                 //pkg_lgth fifo

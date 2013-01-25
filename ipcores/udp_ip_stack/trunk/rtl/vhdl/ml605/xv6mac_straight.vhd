@@ -119,15 +119,29 @@ architecture wrapper of xv6mac_straight is
 
   end component MAC_top;
 
+  component maindcm
+  port
+   (-- Clock in ports
+    SYSCLK_P         : in     std_logic;
+    SYSCLK_N         : in     std_logic;
+    -- Clock out ports
+    CLK_125M          : out    std_logic;
+    CLK_80M          : out    std_logic;
+    CLK_66M          : out    std_logic;
+    -- Status and control signals
+    RESET             : in     std_logic;
+    LOCKED            : out    std_logic
+   );
+  end component;
+
   constant BOARD_PHY_ADDR                  : std_logic_vector(7 downto 0)  := "00000111";
   ------------------------------------------------------------------------------
   -- internal signals used in this top level wrapper.
   ------------------------------------------------------------------------------
 
   -- example design clocks
-  signal gtx_clk_bufg                      : std_logic;
-  signal refclk_bufg                       : std_logic;
-  signal rx_mac_aclk                       : std_logic;
+  signal clk_125, clk_80, clk_66 : std_logic;
+  signal dcm_locked : std_logic;
 
   -- tx handshaking
   signal mac_tx_tready_int            : std_logic;
@@ -144,7 +158,6 @@ architecture wrapper of xv6mac_straight is
   signal chk_reset_int                     : std_logic;
   signal chk_pre_resetn                    : std_logic := '0';
   signal chk_resetn                        : std_logic := '0';
-  signal dcm_locked                        : std_logic;
 
   signal glbl_rst_int                      : std_logic;
   signal phy_reset_count                   : unsigned(5 downto 0);
@@ -158,12 +171,6 @@ architecture wrapper of xv6mac_straight is
   signal rx_tvalid_reg                : std_logic;
   signal rx_tlast_reg               : std_logic;
 
-  attribute keep : string;
-  attribute keep of gtx_clk_bufg             : signal is "true";
-  attribute keep of refclk_bufg              : signal is "true";
-  attribute keep of mac_tx_tready_int        : signal is "true";
-  attribute keep of tx_full_reg           : signal is "true";
-
   -- MDIO handling
   signal phy_mdi_int  : std_logic;
   signal phy_mdo_int  : std_logic;
@@ -176,8 +183,22 @@ architecture wrapper of xv6mac_straight is
 
 begin
 
+  --Clocking
+  Inst_maindcm : maindcm
+  port map (
+              SYSCLK_P => clk_in_p,
+              SYSCLK_N => clk_in_n,
+
+              CLK_125M => clk_125,
+              CLK_80M  => clk_80,
+              CLK_66M  => clk_66,
+
+              RESET => glbl_rst,
+              LOCKED => dcm_locked
+           );
+
   --MDIO
-  phy_mdio <= phy_mdo_int when phy_mdoen_int = '1' else 'Z';
+  phy_mdio <= phy_mdo_int when phy_mden_int = '1' else 'Z';
   phy_mdi_int <= phy_mdio;
 
   -- begin proceses
@@ -206,9 +227,9 @@ begin
 
   end process;
 
-  sequential: process(gtx_clk_bufg)
+  sequential: process(clk_125)
   begin
-    if rising_edge(gtx_clk_bufg) then
+    if rising_edge(clk_125) then
       if chk_resetn = '0' then
         -- reset state variables
         rx_data_reg <= (others => '0');
@@ -244,7 +265,7 @@ begin
         Reset              => phy_resetn_int,
         Clk_125M           => clk_125,
         Clk_user           => clk_66,
-        Clk_reg            => clk_80, --Or clk_66
+        Clk_reg            => clk_80,
         Speed              => open,
 
         --TODO: define this conversion somehow...
@@ -289,17 +310,16 @@ begin
 
         Mdi                => phy_mdi_int,
         Mdo                => phy_mdo_int,
-        MdoEn              => phy_mdoen_int,
+        MdoEn              => phy_mden_int,
         Mdc                => phy_mdc
        );
-
-  --TODO: generate clocks
 
   glbl_rst_intn <= not glbl_rst_int;
 
   -- generate the user side clocks
-  mac_tx_clock <= gtx_clk_bufg;
-  mac_rx_clock <= gtx_clk_bufg;
+  --TODO: should these be slower?
+  mac_tx_clock <= clk_125;
+  mac_rx_clock <= clk_125;
 
   ------------------------------------------------------------------------------
   -- Generate resets
@@ -311,18 +331,22 @@ begin
 
   -----------------
   -- data check reset
-  chk_reset_gen : tri_mode_eth_mac_v5_4_reset_sync
-  port map (
-             clk              => gtx_clk_bufg,
-             enable           => dcm_locked,
-             reset_in         => local_chk_reset,
-             reset_out        => chk_reset_int
-           );
+  --TODO: is this correct?
+  resetgen : process(clk_125, dcm_locked, local_chk_reset)
+  begin
+    if clk_125'event and clk_125 = '1' then
+      if dcm_locked = '1' then
+        chk_reset_int <= local_chk_reset;
+      else
+        chk_reset_int <= '1';
+      end if;
+    end if;
+  end process;
 
   -- Create fully synchronous reset in the gtx clock domain.
-  gen_chk_reset : process (gtx_clk_bufg)
+  gen_chk_reset : process (clk_125)
   begin
-    if gtx_clk_bufg'event and gtx_clk_bufg = '1' then
+    if clk_125'event and clk_125 = '1' then
       if chk_reset_int = '1' then
         chk_pre_resetn   <= '0';
         chk_resetn       <= '0';
@@ -338,9 +362,9 @@ begin
   -- PHY reset
   -- the phy reset output (active low) needs to be held for at least 10x25MHZ cycles
   -- this is derived using the 125MHz available and a 6 bit counter
-  gen_phy_reset : process (gtx_clk_bufg)
+  gen_phy_reset : process (clk_125)
   begin
-    if gtx_clk_bufg'event and gtx_clk_bufg = '1' then
+    if clk_125'event and clk_125 = '1' then
       if glbl_rst_intn = '0' then
         phy_resetn_int       <= '0';
         phy_reset_count      <= (others => '0');
