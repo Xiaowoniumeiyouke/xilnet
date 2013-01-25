@@ -1,0 +1,18 @@
+# Output products list for <top_ila>
+_xmsgs/pn_parser.xmsgs
+top_ila.asy
+top_ila.cdc
+top_ila.constraints/top_ila.ucf
+top_ila.constraints/top_ila.xdc
+top_ila.gise
+top_ila.ncf
+top_ila.ngc
+top_ila.ucf
+top_ila.vhd
+top_ila.vho
+top_ila.xco
+top_ila.xdc
+top_ila.xise
+top_ila_flist.txt
+top_ila_readme.txt
+top_ila_xmdf.tcl
