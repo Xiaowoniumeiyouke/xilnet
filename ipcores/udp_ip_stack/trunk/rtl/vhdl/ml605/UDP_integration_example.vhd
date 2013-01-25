@@ -61,6 +61,19 @@ end UDP_integration_example;
 
 architecture Behavioral of UDP_integration_example is
 
+  component icon
+    PORT (
+      CONTROL0 : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
+      CONTROL1 : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
+      CONTROL2 : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0));
+  end component;
+
+  component top_ila
+    PORT (
+      CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
+      CLK : IN STD_LOGIC;
+      TRIG0 : IN STD_LOGIC_VECTOR(19 DOWNTO 0));
+  end component;
 
   ------------------------------------------------------------------------------
   -- Component Declaration for the complete UDP layer
@@ -109,7 +122,10 @@ architecture Behavioral of UDP_integration_example is
            gmii_gtx_clk                  : out std_logic;
            phy_int                       : in std_logic;
            phy_mdc                       : out std_logic;
-           phy_mdio                      : inout std_logic
+           phy_mdio                      : inout std_logic;
+           --debug
+           icon_control0 : inout std_logic_vector(35 downto 0);
+           icon_control1 : inout std_logic_vector(35 downto 0)
          );
   end component;
 
@@ -158,8 +174,40 @@ architecture Behavioral of UDP_integration_example is
   signal control_int          : udp_control_type;
   signal set_second_tx          : sec_tx_ctrl_type;
 
+  -- Debugging
+  signal display_out : std_logic_vector(3 downto 0);
+
+  signal icon_control0 : std_logic_vector(35 downto 0);
+  signal icon_control1 : std_logic_vector(35 downto 0);
+  signal icon_control2 : std_logic_vector(35 downto 0);
+  signal ila_trig : std_logic_vector(19 downto 0);
+
 begin
 
+  display <= display_out;
+
+  --Debugging support
+  Inst_icon : icon
+  port map (
+              CONTROL0 => icon_control0,
+              CONTROL1 => icon_control1,
+              CONTROL2 => icon_control2
+           );
+
+  ila_trig(3 downto 0) <= display_out;
+  ila_trig(5 downto 6) <= udp_tx_result_int;
+  ila_trig(7) <= udp_tx_data_out_ready_int;
+  ila_trig(13 downto 8) <= arp_pkt_count_int(5 downto 0);
+  ila_trig(19 downto 14) <= ip_pkt_count_int(5 downto 0);
+
+  Inst_top_ila : top_ila
+  port map (
+              CONTROL => icon_control0,
+              CLK => clk_int,
+              TRIG0 => ila_trig
+           );
+
+  --Actual code
   process (
     our_ip, our_mac, udp_tx_result_int, udp_rx_int, udp_tx_start_int, udp_rx_start_int, ip_rx_hdr_int,
     udp_tx_int, count, clk_int, ip_pkt_count_int, arp_pkt_count_int,
@@ -174,12 +222,12 @@ begin
 
     --Set LEDS to indicate current state
     case state is
-      when IDLE       => display (3 downto 0) <= "0001";
-      when WAIT_RX_DONE => display (3 downto 0) <= "0010";
-      when DATA_OUT     => display (3 downto 0) <= "0011";
-      when PAUSE      => display (3 downto 0) <= "0100";
-      when CHECK_SECOND_TX  => display (3 downto 0) <= "0101";
-      when SET_SEC_HDR => display (3 downto 0) <= "0110";
+      when IDLE       => display_out (3 downto 0) <= "0001";
+      when WAIT_RX_DONE => display_out (3 downto 0) <= "0010";
+      when DATA_OUT     => display_out (3 downto 0) <= "0011";
+      when PAUSE      => display_out (3 downto 0) <= "0100";
+      when CHECK_SECOND_TX  => display_out (3 downto 0) <= "0101";
+      when SET_SEC_HDR => display_out (3 downto 0) <= "0110";
     end case;
 
   end process;
@@ -462,10 +510,13 @@ begin
              gmii_rx_clk       => gmii_rx_clk,
              gmii_col          => gmii_col,
              gmii_crs          => gmii_crs,
-             gmii_gtk_clk      => gmii_gtx_clk,
+             gmii_gtx_clk      => gmii_gtx_clk,
              phy_int           => phy_int,
              phy_mdc           => phy_mdc,
-             phy_mdio          => phy_mdio
+             phy_mdio          => phy_mdio,
+             --Debugging
+             icon_control0 => icon_control1,
+             icon_control1 => icon_control2
            );
 
 

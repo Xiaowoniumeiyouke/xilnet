@@ -69,7 +69,11 @@ entity UDP_Complete is
          gmii_gtx_clk                  : out std_logic;
          phy_int                       : in std_logic;
          phy_mdc                       : out std_logic;
-         phy_mdio                      : inout std_logic
+         phy_mdio                      : inout std_logic;
+
+         --Debugging
+         icon_control0 : inout std_logic_vector(35 downto 0);
+         icon_control1 : inout std_logic_vector(35 downto 0)
        );
 end UDP_Complete;
 
@@ -169,7 +173,11 @@ architecture structural of UDP_Complete is
            gmii_gtx_clk                  : out std_logic;
            phy_int                       : in std_logic;
            phy_mdc                       : out std_logic;
-           phy_mdio                      : inout std_logic
+           phy_mdio                      : inout std_logic;
+
+           --Debugging
+           icon_control0 : inout std_logic_vector(35 downto 0);
+           icon_control1 : inout std_logic_vector(35 downto 0)
          );
   end component;
 
@@ -289,12 +297,15 @@ begin
             gmii_rx_clk       => gmii_rx_clk,
             gmii_col          => gmii_col,
             gmii_crs          => gmii_crs,
-            gmii_gtk_clk      => gmii_gtk_clk,
+            gmii_gtx_clk      => gmii_gtx_clk,
             phy_int           => phy_int,
             phy_mdc           => phy_mdc,
-            phy_mdio          => phy_mdio
-          );
+            phy_mdio          => phy_mdio,
 
+            --Debugging
+            icon_control0 => icon_control0,
+            icon_control1 => icon_control1
+          );
 
 end structural;
 

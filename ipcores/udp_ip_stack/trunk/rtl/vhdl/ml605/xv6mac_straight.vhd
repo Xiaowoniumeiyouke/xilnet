@@ -54,11 +54,24 @@ entity xv6mac_straight is
          gmii_gtx_clk                  : out std_logic;
          phy_int                       : in std_logic;
          phy_mdc                       : out std_logic;
-         phy_mdio                      : inout std_logic
+         phy_mdio                      : inout std_logic;
+
+         --Debugging
+         icon_control0 : inout std_logic_vector(35 downto 0);
+         icon_control1 : inout std_logic_vector(35 downto 0)
        );
 end xv6mac_straight;
 
 architecture wrapper of xv6mac_straight is
+
+  component mac_ila
+    PORT (
+      CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
+      CLK : IN STD_LOGIC;
+      TRIG0 : IN STD_LOGIC_VECTOR(21 DOWNTO 0);
+      TRIG1 : IN STD_LOGIC_VECTOR(38 DOWNTO 0);
+      TRIG2 : IN STD_LOGIC_VECTOR(37 DOWNTO 0));
+  end component;
 
   component MAC_top
     Port(
@@ -176,12 +189,70 @@ architecture wrapper of xv6mac_straight is
   signal phy_mdo_int  : std_logic;
   signal phy_mden_int : std_logic;
 
+  -- interface conversion 'mac <-> AXI-S'
+  signal mac_tx_tready_out : std_logic;
+
+  signal rx_mac_ra   : std_logic; --tvalid?
+  signal rx_mac_rd   : std_logic; --tready?
+  signal rx_mac_data : std_logic_vector(31 downto 0);
+  signal rx_mac_be   : std_logic_vector(1 downto 0);
+  signal rx_mac_pa   : std_logic;
+  signal rx_mac_sop  : std_logic;
+  signal rx_mac_eop  : std_logic; --tlast?
+
+  signal tx_mac_wa   : std_logic; --tready?
+  signal tx_mac_wr   : std_logic; --tvalid?
+  signal tx_mac_data : std_logic_vector(31 downto 0);
+  signal tx_mac_be   : std_logic_vector(1 downto 0);
+  signal tx_mac_sop  : std_logic;
+  signal tx_mac_eop  : std_logic; --tlast?
+
+  -- debugging
+  signal trig0 : std_logic_vector(21 downto 0);
+  signal trig1 : std_logic_vector(38 downto 0);
+  signal trig2 : std_logic_vector(37 downto 0);
 
 ------------------------------------------------------------------------------
 -- Begin architecture
 ------------------------------------------------------------------------------
 
 begin
+
+  mac_tx_tready <= mac_tx_tready_out;
+
+  --Debugging
+  trig0(7 downto 0) <= mac_tx_tdata;
+  trig0(8) <= mac_tx_tvalid;
+  trig0(9) <= mac_tx_tready_int;
+  trig0(10) <= mac_tx_tlast;
+  trig0(18 downto 11) <= rx_data_reg;
+  trig0(19) <= rx_tvalid_reg;
+  trig0(20) <= mac_rx_tready;
+  trig0(21) <= rx_tlast_reg;
+
+  trig1(0) <= rx_mac_ra;
+  trig1(1) <= rx_mac_rd;
+  trig1(33 downto 2) <= rx_mac_data;
+  trig1(35 downto 34) <= rx_mac_be;
+  trig1(36) <= rx_mac_pa;
+  trig1(37) <= rx_mac_sop;
+  trig1(38) <= rx_mac_eop;
+
+  trig2(0) <= tx_mac_wa;
+  trig2(1) <= tx_mac_wr;
+  trig2(33 downto 2) <= tx_mac_data;
+  trig2(35 downto 34) <= tx_mac_be;
+  trig2(36) <= tx_mac_sop;
+  trig2(37) <= tx_mac_eop;
+
+  Inst_mac_ila : mac_ila
+  port map (
+            CONTROL => icon_control0,
+            CLK => clk_125,
+            TRIG0 => trig0,
+            TRIG1 => trig1,
+            TRIG2 => trig2
+           );
 
   --Clocking
   Inst_maindcm : maindcm
@@ -211,7 +282,7 @@ begin
     mac_rx_tdata  <= rx_data_reg;
     mac_rx_tvalid <= rx_tvalid_reg;
     mac_rx_tlast  <= rx_tlast_reg;
-    mac_tx_tready <= not (tx_full_reg and not mac_tx_tready_int);   -- if not full, we are ready to accept
+    mac_tx_tready_out <= not (tx_full_reg and not mac_tx_tready_int);   -- if not full, we are ready to accept
 
     -- control defaults
     tx_full_val <= tx_full_reg;
@@ -269,22 +340,20 @@ begin
         Speed              => open,
 
         --TODO: define this conversion somehow...
-        Rx_mac_ra          => mac_rx_tvalid,
-        Rx_mac_rd          => mac_rx_tready,
-        Rx_mac_data(7 downto 0)  => mac_rx_tdata,
-        Rx_mac_data(13 downto 8) => open,
-        Rx_mac_BE          => open,
-        Rx_mac_pa          => open,
-        Rx_mac_sop         => open,
-        Rx_mac_eop         => mac_rx_tlast,
+        Rx_mac_ra          => rx_mac_ra,
+        Rx_mac_rd          => rx_mac_rd,
+        Rx_mac_data        => rx_mac_data,
+        Rx_mac_BE          => rx_mac_be,
+        Rx_mac_pa          => rx_mac_pa,
+        Rx_mac_sop         => rx_mac_sop,
+        Rx_mac_eop         => rx_mac_eop,
 
-        Tx_mac_wa          => mac_tx_tready,
-        Tx_mac_wr          => mac_tx_tvalid,
-        Tx_mac_data(7 downto 0) => mac_tx_tdata,
-        Tx_mac_data(31 downto 8) => (others => '0'),
-        Tx_mac_BE          => "01",
-        Tx_mac_sop         => '0',
-        Tx_mac_eop         => mac_tx_tlast,
+        Tx_mac_wa          => tx_mac_wa,
+        Tx_mac_wr          => tx_mac_wr,
+        Tx_mac_data        => tx_mac_data,
+        Tx_mac_BE          => tx_mac_be,
+        Tx_mac_sop         => tx_mac_sop,
+        Tx_mac_eop         => tx_mac_eop,
 
         Pkg_lgth_fifo_rd   => '0',
         Pkg_lgth_fifo_ra   => open,
@@ -294,7 +363,7 @@ begin
         Rx_er              => gmii_rx_er,
         Rx_dv              => gmii_rx_dv,
         Rxd                => gmii_rxd,
-        Tx_clk             => gmii_tx_clk,
+        Tx_clk             => gmii_rx_clk, --TODO:?
         Tx_er              => gmii_tx_er,
         Tx_en              => gmii_tx_en,
         Txd                => gmii_txd,

@@ -10,7 +10,7 @@ NET "display[2]"                    LOC = "D21";   ## 2   on DS5 LED
 NET "display[3]"                    LOC = "W15";   ## 2   on DS6 LED
 
 ##On-board Marvell PHY
-NET "phy_reset"                     LOC = "J22";   ## 36  on U46
+NET "phy_resetn"                    LOC = "J22";   ## 36  on U46
 NET "gmii_col"                      LOC = "M16";   ## 114 on U46
 NET "gmii_crs"                      LOC = "N15";   ## 115 on U46
 NET "gmii_rx_clk"                   LOC = "P20";   ## 7   on U46
