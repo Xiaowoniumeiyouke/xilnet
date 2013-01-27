@@ -1,4 +1,4 @@
-# file: maindcm.ucf
+# file: maindcm_exdes.xdc
 # 
 # (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
 # 
@@ -51,24 +51,20 @@
 #  input clocks. You can use these to time your system
 #----------------------------------------------------------------
 # Differential clock only needs one constraint
-NET "CLK_IN1_P" TNM_NET = "CLK_IN1_P";
-TIMESPEC "TS_CLK_IN1_P" = PERIOD "CLK_IN1_P" 5.000 ns HIGH 50% INPUT_JITTER 50.0ps;
+create_clock -name CLK_IN1_P -period 5.000 [get_ports CLK_IN1_P]
+set_propagated_clock CLK_IN1_P
+set_input_jitter CLK_IN1_P 0.05
+
+# FALSE PATH constraint added on COUNTER_RESET 
+set_false_path -from [get_ports "COUNTER_RESET"]
+set_false_path -from [get_ports "RESET"]
 
 # Derived clock periods. These are commented out because they are 
 #   automatically propogated by the tools
 # However, if you'd like to use them for module level testing, you 
 #   can copy them into your module level timing checks
 #-----------------------------------------------------------------
-# NET "clk_int[1]" TNM_NET = "CLK_OUT1";
-# TIMESPEC "TS_CLK_OUT1" = PERIOD "CLK_OUT1" 125.000 MHz;
 
-# NET "clk_int[2]" TNM_NET = "CLK_OUT2";
-# TIMESPEC "TS_CLK_OUT2" = PERIOD "CLK_OUT2" 79.545 MHz;
-# NET "clk_int[3]" TNM_NET = "CLK_OUT3";
-# TIMESPEC "TS_CLK_OUT3" = PERIOD "CLK_OUT3" 67.308 MHz;
-# NET "clk_int[4]" TNM_NET = "CLK_OUT4";
-# TIMESPEC "TS_CLK_OUT4" = PERIOD "CLK_OUT4" 125.000 MHz;
+#-----------------------------------------------------------------
 
-# FALSE PATH constraints 
-PIN "RESET" TIG;
-
+#-----------------------------------------------------------------

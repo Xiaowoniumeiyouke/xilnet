@@ -9,6 +9,9 @@ NET "display[1]"                    LOC = "AB4";   ## 2   on DS4 LED
 NET "display[2]"                    LOC = "D21";   ## 2   on DS5 LED
 NET "display[3]"                    LOC = "W15";   ## 2   on DS6 LED
 
+#Silence error because Xilinx put it on a non GCLK pin
+NET "gmii_rx_clk" CLOCK_DEDICATED_ROUTE = FALSE;
+
 ##On-board Marvell PHY
 NET "phy_resetn"                    LOC = "J22";   ## 36  on U46
 NET "gmii_col"                      LOC = "M16";   ## 114 on U46

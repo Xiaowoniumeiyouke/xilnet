@@ -1,4 +1,5 @@
-# file: maindcm.ucf
+#!/bin/sh
+# file: simulate_vcs.sh
 # 
 # (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
 # 
@@ -47,28 +48,23 @@
 # PART OF THIS FILE AT ALL TIMES.
 # 
 
-# Input clock periods. These duplicate the values entered for the
-#  input clocks. You can use these to time your system
-#----------------------------------------------------------------
-# Differential clock only needs one constraint
-NET "CLK_IN1_P" TNM_NET = "CLK_IN1_P";
-TIMESPEC "TS_CLK_IN1_P" = PERIOD "CLK_IN1_P" 5.000 ns HIGH 50% INPUT_JITTER 50.0ps;
 
-# Derived clock periods. These are commented out because they are 
-#   automatically propogated by the tools
-# However, if you'd like to use them for module level testing, you 
-#   can copy them into your module level timing checks
-#-----------------------------------------------------------------
-# NET "clk_int[1]" TNM_NET = "CLK_OUT1";
-# TIMESPEC "TS_CLK_OUT1" = PERIOD "CLK_OUT1" 125.000 MHz;
+# remove old files
+rm -rf simv* csrc DVEfiles AN.DB 
 
-# NET "clk_int[2]" TNM_NET = "CLK_OUT2";
-# TIMESPEC "TS_CLK_OUT2" = PERIOD "CLK_OUT2" 79.545 MHz;
-# NET "clk_int[3]" TNM_NET = "CLK_OUT3";
-# TIMESPEC "TS_CLK_OUT3" = PERIOD "CLK_OUT3" 67.308 MHz;
-# NET "clk_int[4]" TNM_NET = "CLK_OUT4";
-# TIMESPEC "TS_CLK_OUT4" = PERIOD "CLK_OUT4" 125.000 MHz;
+# compile all of the files
+# Note that -sverilog is not strictly required- You can
+#   remove the -sverilog if you change the type of the
+#   localparam for the periods in the testbench file to 
+#   [63:0] from time
+vhdlan -xlrm ../../implement/results/routed.vhd \
+      maindcm_tb.vhd
 
-# FALSE PATH constraints 
-PIN "RESET" TIG;
+# prepare the simulation 
+vcs +vcs+lic+wait -xlrm -sdf max:maindcm_exdes:../../implement/results/routed.sdf -debug maindcm_tb.vhd ../../implement/results/routed.vhd
 
+# run the simulation
+./simv -xlrm -ucli -i ucli_commands.key
+
+# launch the viewer
+#dve -vpd vcdplus.vpd -session vcs_session.tcl

@@ -1,4 +1,4 @@
-# file: maindcm.ucf
+# file: maindcm_exdes.ucf
 # 
 # (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
 # 
@@ -70,5 +70,6 @@ TIMESPEC "TS_CLK_IN1_P" = PERIOD "CLK_IN1_P" 5.000 ns HIGH 50% INPUT_JITTER 50.0
 # TIMESPEC "TS_CLK_OUT4" = PERIOD "CLK_OUT4" 125.000 MHz;
 
 # FALSE PATH constraints 
+PIN "COUNTER_RESET" TIG;
 PIN "RESET" TIG;
 

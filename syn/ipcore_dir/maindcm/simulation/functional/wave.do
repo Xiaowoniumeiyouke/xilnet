@@ -1,4 +1,4 @@
-# file: maindcm.ucf
+# file: wave.do
 # 
 # (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
 # 
@@ -47,28 +47,13 @@
 # PART OF THIS FILE AT ALL TIMES.
 # 
 
-# Input clock periods. These duplicate the values entered for the
-#  input clocks. You can use these to time your system
-#----------------------------------------------------------------
-# Differential clock only needs one constraint
-NET "CLK_IN1_P" TNM_NET = "CLK_IN1_P";
-TIMESPEC "TS_CLK_IN1_P" = PERIOD "CLK_IN1_P" 5.000 ns HIGH 50% INPUT_JITTER 50.0ps;
-
-# Derived clock periods. These are commented out because they are 
-#   automatically propogated by the tools
-# However, if you'd like to use them for module level testing, you 
-#   can copy them into your module level timing checks
-#-----------------------------------------------------------------
-# NET "clk_int[1]" TNM_NET = "CLK_OUT1";
-# TIMESPEC "TS_CLK_OUT1" = PERIOD "CLK_OUT1" 125.000 MHz;
-
-# NET "clk_int[2]" TNM_NET = "CLK_OUT2";
-# TIMESPEC "TS_CLK_OUT2" = PERIOD "CLK_OUT2" 79.545 MHz;
-# NET "clk_int[3]" TNM_NET = "CLK_OUT3";
-# TIMESPEC "TS_CLK_OUT3" = PERIOD "CLK_OUT3" 67.308 MHz;
-# NET "clk_int[4]" TNM_NET = "CLK_OUT4";
-# TIMESPEC "TS_CLK_OUT4" = PERIOD "CLK_OUT4" 125.000 MHz;
-
-# FALSE PATH constraints 
-PIN "RESET" TIG;
-
+add wave -noupdate -divider {Input clocks}
+add wave -noupdate -format Logic /maindcm_tb/CLK_IN1
+add wave -noupdate -divider {Output clocks}
+add wave -noupdate -format Literal -expand /maindcm_tb/dut/clk
+add wave -noupdate -divider Status/control
+add wave -noupdate -format Logic /maindcm_tb/RESET
+add wave -noupdate -format Logic /maindcm_tb/LOCKED
+add wave -noupdate -divider Counters
+add wave -noupdate -format Literal -radix hexadecimal /maindcm_tb/COUNT
+add wave -noupdate -format Literal -radix hexadecimal -expand /maindcm_tb/dut/counter

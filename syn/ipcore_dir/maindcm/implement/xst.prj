@@ -1,0 +1,2 @@
+vhdl work ../../maindcm.vhd
+vhdl work ../example_design/maindcm_exdes.vhd

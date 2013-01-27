@@ -1,4 +1,5 @@
-# file: maindcm.ucf
+#/bin/sh
+# file: simulate_ncsim.sh
 # 
 # (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
 # 
@@ -47,28 +48,14 @@
 # PART OF THIS FILE AT ALL TIMES.
 # 
 
-# Input clock periods. These duplicate the values entered for the
-#  input clocks. You can use these to time your system
-#----------------------------------------------------------------
-# Differential clock only needs one constraint
-NET "CLK_IN1_P" TNM_NET = "CLK_IN1_P";
-TIMESPEC "TS_CLK_IN1_P" = PERIOD "CLK_IN1_P" 5.000 ns HIGH 50% INPUT_JITTER 50.0ps;
+# set up the working directory
+mkdir work
 
-# Derived clock periods. These are commented out because they are 
-#   automatically propogated by the tools
-# However, if you'd like to use them for module level testing, you 
-#   can copy them into your module level timing checks
-#-----------------------------------------------------------------
-# NET "clk_int[1]" TNM_NET = "CLK_OUT1";
-# TIMESPEC "TS_CLK_OUT1" = PERIOD "CLK_OUT1" 125.000 MHz;
+# compile all of the files
+ncvhdl -v93 -work work ../../../maindcm.vhd
+ncvhdl -v93 -work work ../../example_design/maindcm_exdes.vhd
+ncvhdl -v93 -work work ../maindcm_tb.vhd
 
-# NET "clk_int[2]" TNM_NET = "CLK_OUT2";
-# TIMESPEC "TS_CLK_OUT2" = PERIOD "CLK_OUT2" 79.545 MHz;
-# NET "clk_int[3]" TNM_NET = "CLK_OUT3";
-# TIMESPEC "TS_CLK_OUT3" = PERIOD "CLK_OUT3" 67.308 MHz;
-# NET "clk_int[4]" TNM_NET = "CLK_OUT4";
-# TIMESPEC "TS_CLK_OUT4" = PERIOD "CLK_OUT4" 125.000 MHz;
-
-# FALSE PATH constraints 
-PIN "RESET" TIG;
-
+# elaborate and run the simulation
+ncelab -work work -access +wc work.maindcm_tb 
+ncsim -input  "@database -open -shm nc; probe -create -database nc -all -depth all; probe dut.counter; run 50000ns; exit" work.maindcm_tb

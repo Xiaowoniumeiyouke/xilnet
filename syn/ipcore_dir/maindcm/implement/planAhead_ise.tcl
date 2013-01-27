@@ -1,4 +1,4 @@
-# file: maindcm.ucf
+# file: planAhead_ise.tcl
 # 
 # (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
 # 
@@ -47,28 +47,32 @@
 # PART OF THIS FILE AT ALL TIMES.
 # 
 
-# Input clock periods. These duplicate the values entered for the
-#  input clocks. You can use these to time your system
-#----------------------------------------------------------------
-# Differential clock only needs one constraint
-NET "CLK_IN1_P" TNM_NET = "CLK_IN1_P";
-TIMESPEC "TS_CLK_IN1_P" = PERIOD "CLK_IN1_P" 5.000 ns HIGH 50% INPUT_JITTER 50.0ps;
+set projDir [file dirname [info script]]
+set projName maindcm
+set topName maindcm_exdes
+set device xc6slx45tfgg484-3
 
-# Derived clock periods. These are commented out because they are 
-#   automatically propogated by the tools
-# However, if you'd like to use them for module level testing, you 
-#   can copy them into your module level timing checks
-#-----------------------------------------------------------------
-# NET "clk_int[1]" TNM_NET = "CLK_OUT1";
-# TIMESPEC "TS_CLK_OUT1" = PERIOD "CLK_OUT1" 125.000 MHz;
+create_project $projName $projDir/results/$projName -part $device
 
-# NET "clk_int[2]" TNM_NET = "CLK_OUT2";
-# TIMESPEC "TS_CLK_OUT2" = PERIOD "CLK_OUT2" 79.545 MHz;
-# NET "clk_int[3]" TNM_NET = "CLK_OUT3";
-# TIMESPEC "TS_CLK_OUT3" = PERIOD "CLK_OUT3" 67.308 MHz;
-# NET "clk_int[4]" TNM_NET = "CLK_OUT4";
-# TIMESPEC "TS_CLK_OUT4" = PERIOD "CLK_OUT4" 125.000 MHz;
+set_property design_mode RTL [get_filesets sources_1]
 
-# FALSE PATH constraints 
-PIN "RESET" TIG;
+## Source files
+#set verilogSources [glob $srcDir/*.v]
+import_files -fileset [get_filesets sources_1] -force -norecurse ../../example_design/maindcm_exdes.vhd
+import_files -fileset [get_filesets sources_1] -force -norecurse ../../../maindcm.vhd
+
+
+#UCF file
+import_files -fileset [get_filesets constrs_1] -force -norecurse ../../example_design/maindcm_exdes.ucf
+
+set_property top $topName [get_property srcset [current_run]]
+
+launch_runs -runs synth_1
+wait_on_run synth_1
+
+set_property add_step Bitgen [get_runs impl_1]
+launch_runs -runs impl_1
+wait_on_run impl_1
+
+
 

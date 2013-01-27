@@ -147,6 +147,7 @@ architecture wrapper of xv6mac_straight is
     CLK_125M          : out    std_logic;
     CLK_80M          : out    std_logic;
     CLK_66M          : out    std_logic;
+    CLK_125M_INV     : out    std_logic;
     -- Status and control signals
     RESET             : in     std_logic;
     LOCKED            : out    std_logic
@@ -187,8 +188,12 @@ architecture wrapper of xv6mac_straight is
   ------------------------------------------------------------------------------
 
   -- example design clocks
-  signal clk_125, clk_80, clk_66 : std_logic;
+  signal clk_125, clk_80, clk_66, clk_125_invert : std_logic;
   signal dcm_locked : std_logic;
+  signal clk_gtx_prebuf : std_logic;
+  signal clk_gtx_invert : std_logic;
+  signal gmii_rx_clk_buf : std_logic;
+  signal gmii_rx_clk_invert : std_logic;
 
   -- tx handshaking
   signal mac_tx_tready_int            : std_logic;
@@ -289,7 +294,7 @@ begin
             CONTROL => icon_control1,
             CLK => clk_66,
             TRIG0 => trig1,
-            TRIGl => trig2
+            TRIG1 => trig2
            );
 
   --Clocking
@@ -301,6 +306,7 @@ begin
               CLK_125M => clk_125,
               CLK_80M  => clk_80,
               CLK_66M  => clk_66,
+              CLK_125M_INV => clk_125_invert,
 
               RESET => glbl_rst,
               LOCKED => dcm_locked
@@ -341,17 +347,17 @@ begin
         Pkg_lgth_fifo_ra   => open,
         Pkg_lgth_fifo_data => open,
 
-        Rx_clk             => gmii_rx_clk,
+        Rx_clk             => gmii_rx_clk_buf,
         Rx_er              => gmii_rx_er,
         Rx_dv              => gmii_rx_dv,
         Rxd                => gmii_rxd,
-        Tx_clk             => gmii_rx_clk, --TODO:?
+        Tx_clk             => gmii_rx_clk_buf,
         Tx_er              => gmii_tx_er,
         Tx_en              => gmii_tx_en,
         Txd                => gmii_txd,
         Crs                => gmii_crs,
         Col                => gmii_col,
-        Gtx_clk            => gmii_gtx_clk,
+        Gtx_clk            => clk_gtx_prebuf,
 
         CSB                => '0',
         WRB                => '0',
@@ -366,6 +372,53 @@ begin
        );
 
   glbl_rst_intn <= not glbl_rst;
+
+  -- Clock buffering/forwarding/etc.
+
+  -- TODO: I can only do this because I know too much about which clocks
+  --       are used where, and how they get routed back through the IP
+  clk_gtx_invert <= clk_125_invert;
+  gmii_rx_clk_invert <= clk_125_invert;
+
+  Inst_rxclk_bufg : IBUFG
+  port map (
+            I => gmii_rx_clk,
+            O => gmii_rx_clk_buf
+           );
+
+  Inst_txclk_oddr2 : ODDR2
+  generic map (
+                DDR_ALIGNMENT => "NONE",
+                INIT => '0',
+                SRTYPE => "SYNC"
+              )
+  port map (
+            Q => gmii_tx_clk,
+            C0 => gmii_rx_clk_buf,
+            C1 => gmii_rx_clk_invert,
+            CE => '1',
+            D0 => '1',
+            D1 => '0',
+            R => '0',
+            S => '0'
+           );
+
+  Inst_gtxclk_oddr2 : ODDR2
+  generic map (
+                DDR_ALIGNMENT => "NONE",
+                INIT => '0',
+                SRTYPE => "SYNC"
+              )
+  port map (
+            Q => gmii_gtx_clk,
+            C0 => clk_gtx_prebuf,
+            C1 => clk_gtx_invert,
+            CE => '1',
+            D0 => '1',
+            D1 => '0',
+            R => '0',
+            S => '0'
+           );
 
   -- generate the user side clocks
   mac_tx_clock <= clk_125;
