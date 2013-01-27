@@ -147,6 +147,34 @@ architecture wrapper of xv6mac_straight is
    );
   end component;
 
+  COMPONENT fifo32to8
+    PORT (
+      rst : IN STD_LOGIC;
+      wr_clk : IN STD_LOGIC;
+      rd_clk : IN STD_LOGIC;
+      din : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+      wr_en : IN STD_LOGIC;
+      rd_en : IN STD_LOGIC;
+      dout : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      full : OUT STD_LOGIC;
+      empty : OUT STD_LOGIC
+    );
+  END COMPONENT;
+
+  COMPONENT fifo8to32
+    PORT (
+      rst : IN STD_LOGIC;
+      wr_clk : IN STD_LOGIC;
+      rd_clk : IN STD_LOGIC;
+      din : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+      wr_en : IN STD_LOGIC;
+      rd_en : IN STD_LOGIC;
+      dout : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+      full : OUT STD_LOGIC;
+      empty : OUT STD_LOGIC
+    );
+  END COMPONENT;
+
   constant BOARD_PHY_ADDR                  : std_logic_vector(7 downto 0)  := "00000111";
   ------------------------------------------------------------------------------
   -- internal signals used in this top level wrapper.
@@ -172,17 +200,8 @@ architecture wrapper of xv6mac_straight is
   signal chk_pre_resetn                    : std_logic := '0';
   signal chk_resetn                        : std_logic := '0';
 
-  signal glbl_rst_int                      : std_logic;
   signal phy_reset_count                   : unsigned(5 downto 0);
   signal glbl_rst_intn                     : std_logic;
-
-  -- pipeline register for RX signals
-  signal rx_data_val                : std_logic_vector(7 downto 0);
-  signal rx_tvalid_val                : std_logic;
-  signal rx_tlast_val               : std_logic;
-  signal rx_data_reg                : std_logic_vector(7 downto 0);
-  signal rx_tvalid_reg                : std_logic;
-  signal rx_tlast_reg               : std_logic;
 
   -- MDIO handling
   signal phy_mdi_int  : std_logic;
@@ -190,7 +209,16 @@ architecture wrapper of xv6mac_straight is
   signal phy_mden_int : std_logic;
 
   -- interface conversion 'mac <-> AXI-S'
-  signal mac_tx_tready_out : std_logic;
+  signal mac_rx_tdata_int  : std_logic_vector(7 downto 0);
+  signal mac_rx_tvalid_int : std_logic;
+  signal mac_rx_tlast_int  : std_logic;
+
+  signal txfifo_rst   : std_logic;
+  signal txfifo_empty : std_logic;
+  signal txfifo_empty_prev : std_logic;
+  signal txfifo_full  : std_logic;
+
+  signal rxfifo_empty : std_logic;
 
   signal rx_mac_ra   : std_logic; --tvalid?
   signal rx_mac_rd   : std_logic; --tready?
@@ -218,17 +246,15 @@ architecture wrapper of xv6mac_straight is
 
 begin
 
-  mac_tx_tready <= mac_tx_tready_out;
-
   --Debugging
   trig0(7 downto 0) <= mac_tx_tdata;
   trig0(8) <= mac_tx_tvalid;
   trig0(9) <= mac_tx_tready_int;
   trig0(10) <= mac_tx_tlast;
-  trig0(18 downto 11) <= rx_data_reg;
-  trig0(19) <= rx_tvalid_reg;
+  trig0(18 downto 11) <= mac_rx_tdata_int;
+  trig0(19) <= mac_rx_tvalid_int;
   trig0(20) <= mac_rx_tready;
-  trig0(21) <= rx_tlast_reg;
+  trig0(21) <= mac_rx_tlast_int;
 
   trig1(0) <= rx_mac_ra;
   trig1(1) <= rx_mac_rd;
@@ -271,77 +297,6 @@ begin
   --MDIO
   phy_mdio <= phy_mdo_int when phy_mden_int = '1' else 'Z';
   phy_mdi_int <= phy_mdio;
-
-  -- begin proceses
-  combinatorial: process (
-    rx_data_reg, rx_tvalid_reg, rx_tlast_reg,
-    mac_tx_tvalid, mac_tx_tready_int, tx_full_reg, tx_full_val, set_tx_reg
-  )
-  begin
-    -- output followers
-    mac_rx_tdata  <= rx_data_reg;
-    mac_rx_tvalid <= rx_tvalid_reg;
-    mac_rx_tlast  <= rx_tlast_reg;
-    mac_tx_tready_out <= not (tx_full_reg and not mac_tx_tready_int);   -- if not full, we are ready to accept
-
-    -- control defaults
-    tx_full_val <= tx_full_reg;
-    set_tx_reg <= '0';
-
-    -- tx handshaking logic
-    if mac_tx_tvalid = '1' then
-      tx_full_val <= '1';
-      set_tx_reg <= '1';
-    elsif mac_tx_tready_int = '1' then
-      tx_full_val <= '0';
-    end if;
-
-  end process;
-
-  sequential: process(clk_125)
-  begin
-    if rising_edge(clk_125) then
-      if chk_resetn = '0' then
-        -- reset state variables
-        rx_data_reg <= (others => '0');
-        rx_tvalid_reg <= '0';
-        rx_tlast_reg <= '0';
-        tx_full_reg <= '0';
-        tx_data_reg <= (others => '0');
-        tx_last_reg <= '0';
-      else
-        -- register rx data
-        rx_data_reg <= rx_data_val;
-        rx_tvalid_reg <= rx_tvalid_val;
-        rx_tlast_reg <= rx_tlast_val;
-
-        -- process tx tvalid and tready
-        tx_full_reg <= tx_full_val;
-        if set_tx_reg = '1' then
-          tx_data_reg <= mac_tx_tdata;
-          tx_last_reg <= mac_tx_tlast;
-        else
-          tx_data_reg <= tx_data_reg;
-          tx_last_reg <= tx_last_reg;
-        end if;
-      end if;
-    end if;
-  end process;
-
-  -- Interface conversion 'mac <-> AXI-S'
-  rxinterface : process
-  begin
-    rx_mac_ra <= mac_rx_tvalid;
-    rx_mac_rd <= mac_rx_tready;
-    rx_mac_eop <= mac_rx_tlast;
-  end process;
-
-  txinterface : process
-  begin
-    tx_mac_wa <= mac_tx_tready;
-    tx_mac_wr <= mac_tx_tvalid;
-    tx_mac_eop <= mac_tx_tlast;
-  end process;
 
   ------------------------------------------------------------------------------
   -- Instantiate the Ethernet wrapper
@@ -398,12 +353,88 @@ begin
         Mdc                => phy_mdc
        );
 
-  glbl_rst_intn <= not glbl_rst_int;
+  glbl_rst_intn <= not glbl_rst;
 
   -- generate the user side clocks
-  --TODO: should these be slower?
   mac_tx_clock <= clk_125;
   mac_rx_clock <= clk_125;
+
+  -- Interface speed conversion from 32-bit MAC to 8-bit AXI-S
+  -- TODO: these interfaces may have many off-by-1 errors (eg. SOP/EOP, first-word-fallthrough)
+  -- TODO: currently assumes BE is always "11"
+  rxctrl : process(clk_66, rx_mac_ra)
+  begin
+    if clk_66'event and clk_66 = '1' then
+      if rx_mac_ra = '1' and (not rxfifo_empty = '1') then
+        rx_mac_rd <= '1';
+        mac_rx_tvalid_int <= '1';
+      else
+        rx_mac_rd <= '0';
+        mac_rx_tvalid_int <= '0';
+      end if;
+    end if;
+  end process;
+
+  mac_rx_tdata  <= mac_rx_tdata_int;
+  mac_rx_tvalid <= mac_rx_tvalid_int;
+  mac_rx_tlast  <= mac_rx_tlast_int;
+
+  Inst_rxfifo : fifo32to8
+  port map (
+            rst    => rx_mac_sop,
+            empty  => rxfifo_empty,
+            full   => mac_rx_tlast_int,
+
+            wr_clk => clk_66,
+            din    => rx_mac_data,
+            wr_en  => rx_mac_rd,
+
+            rd_clk => clk_125,
+            dout   => mac_rx_tdata_int,
+            rd_en  => mac_rx_tready
+           );
+
+  tx_mac_be <= "11";
+  mac_tx_tready <= not txfifo_full;
+
+  txctrl : process(clk_66)
+  begin
+    if clk_66'event and clk_66 = '1' then
+      if mac_tx_tlast = '0' and txfifo_empty = '1' and (not mac_tx_tvalid = '1') then
+        txfifo_rst <= '1';
+      else
+        txfifo_rst <= '0';
+      end if;
+
+      if txfifo_empty = '0' and txfifo_empty_prev = '1' then
+        tx_mac_sop <= '1';
+      else
+        tx_mac_sop <= '0';
+      end if;
+      txfifo_empty_prev <= txfifo_empty;
+
+      if tx_mac_wa = '1' and (not txfifo_empty = '1') then
+        tx_mac_wr <= '1';
+      else
+        tx_mac_wr <= '0';
+      end if;
+    end if;
+  end process;
+
+  Inst_txfifo : fifo8to32
+  port map (
+            rst    => txfifo_rst,
+            empty  => txfifo_empty,
+            full   => txfifo_full,
+
+            wr_clk => clk_125,
+            din    => mac_tx_tdata,
+            wr_en  => mac_tx_tvalid,
+
+            rd_clk => clk_66,
+            dout   => tx_mac_data,
+            rd_en  => tx_mac_wr
+           );
 
   ------------------------------------------------------------------------------
   -- Generate resets
