@@ -68,9 +68,15 @@ architecture wrapper of xv6mac_straight is
     PORT (
       CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
       CLK : IN STD_LOGIC;
-      TRIG0 : IN STD_LOGIC_VECTOR(21 DOWNTO 0);
-      TRIG1 : IN STD_LOGIC_VECTOR(38 DOWNTO 0);
-      TRIG2 : IN STD_LOGIC_VECTOR(37 DOWNTO 0));
+      TRIG0 : IN STD_LOGIC_VECTOR(21 DOWNTO 0));
+  end component;
+
+  component mac2_ila
+    PORT (
+      CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
+      CLK : IN STD_LOGIC;
+      TRIG0 : IN STD_LOGIC_VECTOR(38 DOWNTO 0);
+      TRIG1 : IN STD_LOGIC_VECTOR(37 DOWNTO 0));
   end component;
 
   component MAC_top
@@ -275,9 +281,15 @@ begin
   port map (
             CONTROL => icon_control0,
             CLK => clk_125,
-            TRIG0 => trig0,
-            TRIG1 => trig1,
-            TRIG2 => trig2
+            TRIG0 => trig0
+           );
+
+  Inst_mac2_ila : mac2_ila
+  port map (
+            CONTROL => icon_control1,
+            CLK => clk_66,
+            TRIG0 => trig1,
+            TRIGl => trig2
            );
 
   --Clocking

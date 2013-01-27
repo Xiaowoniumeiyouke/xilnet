@@ -1,0 +1,18 @@
+# Output products list for <mac2_ila>
+_xmsgs/pn_parser.xmsgs
+mac2_ila.asy
+mac2_ila.cdc
+mac2_ila.constraints/mac2_ila.ucf
+mac2_ila.constraints/mac2_ila.xdc
+mac2_ila.gise
+mac2_ila.ncf
+mac2_ila.ngc
+mac2_ila.ucf
+mac2_ila.vhd
+mac2_ila.vho
+mac2_ila.xco
+mac2_ila.xdc
+mac2_ila.xise
+mac2_ila_flist.txt
+mac2_ila_readme.txt
+mac2_ila_xmdf.tcl
