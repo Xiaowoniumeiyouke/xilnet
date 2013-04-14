@@ -321,7 +321,7 @@ begin
   ------------------------------------------------------------------------------
   mac_block : MAC_top
   port map(
-        Reset              => phy_resetn_int,
+        Reset              => (not phy_resetn_int),
         Clk_125M           => clk_125,
         Clk_user           => clk_66,
         Clk_reg            => clk_80,
