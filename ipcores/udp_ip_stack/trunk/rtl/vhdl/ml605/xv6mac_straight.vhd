@@ -230,6 +230,7 @@ architecture wrapper of xv6mac_straight is
   signal txfifo_full  : std_logic;
 
   signal rxfifo_empty : std_logic;
+  signal rxfifo_full : std_logic;
 
   signal rx_mac_ra   : std_logic; --tvalid?
   signal rx_mac_rd   : std_logic; --tready?
@@ -430,7 +431,8 @@ begin
   rxctrl : process(clk_66, rx_mac_ra)
   begin
     if clk_66'event and clk_66 = '1' then
-      if rx_mac_ra = '1' and (not rxfifo_empty = '1') then
+      --Does use of full cause possible fragmentation problems?
+      if rx_mac_ra = '1' and (not rxfifo_full = '1') then
         rx_mac_rd <= '1';
         mac_rx_tvalid_int <= '1';
       else
@@ -443,12 +445,13 @@ begin
   mac_rx_tdata  <= mac_rx_tdata_int;
   mac_rx_tvalid <= mac_rx_tvalid_int;
   mac_rx_tlast  <= mac_rx_tlast_int;
+  mac_rx_tlast_int <= rxfifo_full;
 
   Inst_rxfifo : fifo32to8
   port map (
             rst    => rx_mac_sop,
             empty  => rxfifo_empty,
-            full   => mac_rx_tlast_int,
+            full   => rxfifo_full,
 
             wr_clk => clk_66,
             din    => rx_mac_data,
