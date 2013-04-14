@@ -275,12 +275,12 @@ begin
   trig1(37) <= rx_mac_sop;
   trig1(38) <= rx_mac_eop;
 
-  trig2(0) <= tx_mac_wa;
-  trig2(1) <= tx_mac_wr;
-  trig2(33 downto 2) <= tx_mac_data;
-  trig2(35 downto 34) <= tx_mac_be;
-  trig2(36) <= tx_mac_sop;
-  trig2(37) <= tx_mac_eop;
+  trig2(7 downto 0) <= gmii_rxd;
+  trig2(8) <= gmii_rx_dv;
+  trig2(9) <= gmii_rx_er;
+  trig2(10) <= gmii_rx_clk_buf;
+  trig2(11) <= gmii_col;
+  trig2(12) <= gmii_crs;
 
   Inst_mac_ila : mac_ila
   port map (
@@ -292,7 +292,7 @@ begin
   Inst_mac2_ila : mac2_ila
   port map (
             CONTROL => icon_control1,
-            CLK => clk_66,
+            CLK => gmii_rx_clk_buf,
             TRIG0 => trig1,
             TRIG1 => trig2
            );
