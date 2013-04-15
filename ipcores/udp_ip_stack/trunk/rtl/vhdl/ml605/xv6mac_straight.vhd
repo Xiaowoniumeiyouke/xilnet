@@ -260,8 +260,8 @@ begin
 
   --Debugging
   trig0(7 downto 0) <= mac_tx_tdata;
-  trig0(8) <= mac_tx_tvalid;
-  trig0(9) <= mac_tx_tready_int;
+  trig0(8) <= rxfifo_empty;
+  trig0(9) <= rxfifo_full;
   trig0(10) <= mac_tx_tlast;
   trig0(18 downto 11) <= mac_rx_tdata_int;
   trig0(19) <= mac_rx_tvalid_int;
