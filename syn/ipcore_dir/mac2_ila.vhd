@@ -8,7 +8,7 @@
 -- \   \   \/     Version    : 14.4
 --  \   \         Application: XILINX CORE Generator
 --  /   /         Filename   : mac2_ila.vhd
--- /___/   /\     Timestamp  : Sun Jan 27 19:02:45 GMT 2013
+-- /___/   /\     Timestamp  : Tue Apr 16 00:20:10 BST 2013
 -- \   \  /  \
 --  \___\/\___\
 --
@@ -23,7 +23,8 @@ ENTITY mac2_ila IS
     CONTROL: inout std_logic_vector(35 downto 0);
     CLK: in std_logic;
     TRIG0: in std_logic_vector(38 downto 0);
-    TRIG1: in std_logic_vector(37 downto 0));
+    TRIG1: in std_logic_vector(12 downto 0);
+    TRIG2: in std_logic_vector(38 downto 0));
 END mac2_ila;
 
 ARCHITECTURE mac2_ila_a OF mac2_ila IS

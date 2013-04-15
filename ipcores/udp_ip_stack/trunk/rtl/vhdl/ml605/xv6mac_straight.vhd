@@ -68,7 +68,7 @@ architecture wrapper of xv6mac_straight is
     PORT (
       CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
       CLK : IN STD_LOGIC;
-      TRIG0 : IN STD_LOGIC_VECTOR(21 DOWNTO 0));
+      TRIG0 : IN STD_LOGIC_VECTOR(25 DOWNTO 0));
   end component;
 
   component mac2_ila
@@ -76,7 +76,8 @@ architecture wrapper of xv6mac_straight is
       CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
       CLK : IN STD_LOGIC;
       TRIG0 : IN STD_LOGIC_VECTOR(38 DOWNTO 0);
-      TRIG1 : IN STD_LOGIC_VECTOR(37 DOWNTO 0));
+      TRIG1 : IN STD_LOGIC_VECTOR(12 DOWNTO 0);
+      TRIG2 : IN STD_LOGIC_VECTOR(38 DOWNTO 0));
   end component;
 
   component MAC_top
@@ -248,9 +249,10 @@ architecture wrapper of xv6mac_straight is
   signal tx_mac_eop  : std_logic; --tlast?
 
   -- debugging
-  signal trig0 : std_logic_vector(21 downto 0);
+  signal trig0 : std_logic_vector(25 downto 0);
   signal trig1 : std_logic_vector(38 downto 0);
-  signal trig2 : std_logic_vector(37 downto 0);
+  signal trig2 : std_logic_vector(12 downto 0);
+  signal trig3 : std_logic_vector(38 downto 0);
 
 ------------------------------------------------------------------------------
 -- Begin architecture
@@ -267,6 +269,10 @@ begin
   trig0(19) <= mac_rx_tvalid_int;
   trig0(20) <= mac_rx_tready;
   trig0(21) <= mac_rx_tlast_int;
+  trig0(22) <= txfifo_full;
+  trig0(23) <= txfifo_empty;
+  trig0(24) <= mac_tx_tready_int;
+  trig0(25) <= mac_tx_tvalid;
 
   trig1(0) <= rx_mac_ra;
   trig1(1) <= rx_mac_rd;
@@ -283,6 +289,14 @@ begin
   trig2(11) <= gmii_col;
   trig2(12) <= gmii_crs;
 
+  trig3(0) <= tx_mac_wa;
+  trig3(1) <= tx_mac_wr;
+  trig3(33 downto 2) <= tx_mac_data;
+  trig3(35 downto 34) <= tx_mac_be;
+  trig3(36) <= txfifo_rst;
+  trig3(37) <= tx_mac_sop;
+  trig3(38) <= tx_mac_eop;
+
   Inst_mac_ila : mac_ila
   port map (
             CONTROL => icon_control0,
@@ -295,7 +309,8 @@ begin
             CONTROL => icon_control1,
             CLK => gmii_rx_clk_buf,
             TRIG0 => trig1,
-            TRIG1 => trig2
+            TRIG1 => trig2,
+            TRIG2 => trig3
            );
 
   --Clocking

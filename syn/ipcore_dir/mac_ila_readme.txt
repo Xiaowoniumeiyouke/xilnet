@@ -20,11 +20,6 @@ Creates an implementation netlist:
    * mac_ila.xdc
    * mac_ila_xmdf.tcl
 
-Creates an HDL instantiation template:
-   Creates an HDL instantiation template for the IP.
-
-   * mac_ila.vho
-
 IP Symbol Generator:
    Generate an IP symbol based on the current project options'.
 
