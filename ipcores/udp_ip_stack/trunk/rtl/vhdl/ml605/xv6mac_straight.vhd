@@ -428,15 +428,24 @@ begin
   -- Interface speed conversion from 32-bit MAC to 8-bit AXI-S
   -- TODO: these interfaces may have many off-by-1 errors (eg. SOP/EOP, first-word-fallthrough)
   -- TODO: currently assumes BE is always "11"
-  rxctrl : process(clk_66, rx_mac_ra)
+  rxctrl : process(clk_66, rx_mac_ra, rxfifo_full)
   begin
     if clk_66'event and clk_66 = '1' then
       --Does use of full cause possible fragmentation problems?
       if rx_mac_ra = '1' and (not rxfifo_full = '1') then
         rx_mac_rd <= '1';
-        mac_rx_tvalid_int <= '1';
       else
         rx_mac_rd <= '0';
+      end if;
+    end if;
+  end process;
+
+  rxctl2 : process(clk_125, mac_rx_tready, rxfifo_empty)
+  begin
+    if clk_125'event and clk_125 = '1' then
+      if mac_rx_tready = '1' and (not rxfifo_empty = '1') then
+        mac_rx_tvalid_int <= '1';
+      else
         mac_rx_tvalid_int <= '0';
       end if;
     end if;
@@ -445,21 +454,21 @@ begin
   mac_rx_tdata  <= mac_rx_tdata_int;
   mac_rx_tvalid <= mac_rx_tvalid_int;
   mac_rx_tlast  <= mac_rx_tlast_int;
-  mac_rx_tlast_int <= rxfifo_full;
+  mac_rx_tlast_int <= rxfifo_empty and mac_rx_tvalid_int;
 
   Inst_rxfifo : fifo32to8
   port map (
-            rst    => rx_mac_sop,
+            rst    => (rx_mac_ra and not rx_mac_rd),
             empty  => rxfifo_empty,
             full   => rxfifo_full,
 
             wr_clk => clk_66,
             din    => rx_mac_data,
-            wr_en  => rx_mac_rd,
+            wr_en  => rx_mac_pa,
 
             rd_clk => clk_125,
             dout   => mac_rx_tdata_int,
-            rd_en  => mac_rx_tready
+            rd_en  => mac_rx_tvalid_int
            );
 
   tx_mac_be <= "11";
