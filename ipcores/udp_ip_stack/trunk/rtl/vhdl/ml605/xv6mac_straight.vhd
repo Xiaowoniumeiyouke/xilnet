@@ -487,17 +487,23 @@ begin
            );
 
   tx_mac_be <= "11";
-  mac_tx_tready <= not txfifo_full;
+  mac_tx_tready_int <= not txfifo_full;
+  mac_tx_tready <= mac_tx_tready_int;
 
-  txctrl : process(clk_66)
+  txctrl2 : process(clk_125, txfifo_empty, mac_tx_tvalid, mac_tx_tlast)
   begin
-    if clk_66'event and clk_66 = '1' then
+    if clk_125'event and clk_125 = '1' then
       if mac_tx_tlast = '0' and txfifo_empty = '1' and (not mac_tx_tvalid = '1') then
         txfifo_rst <= '1';
       else
         txfifo_rst <= '0';
       end if;
+    end if;
+  end process;
 
+  txctrl : process(clk_66, txfifo_empty, txfifo_empty_prev, tx_mac_wa)
+  begin
+    if clk_66'event and clk_66 = '1' then
       if txfifo_empty = '0' and txfifo_empty_prev = '1' then
         tx_mac_sop <= '1';
       else
