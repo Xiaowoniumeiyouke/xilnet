@@ -68,7 +68,8 @@ architecture wrapper of xv6mac_straight is
     PORT (
       CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
       CLK : IN STD_LOGIC;
-      TRIG0 : IN STD_LOGIC_VECTOR(25 DOWNTO 0));
+      TRIG0 : IN STD_LOGIC_VECTOR(25 DOWNTO 0);
+      TRIG1 : IN STD_LOGIC_VECTOR(9 DOWNTO 0));
   end component;
 
   component mac2_ila
@@ -206,6 +207,11 @@ architecture wrapper of xv6mac_straight is
 
   signal phy_resetn_int                    : std_logic;
 
+  -- gmii buffering
+  signal gmii_txd_int : std_logic_vector(7 downto 0);
+  signal gmii_tx_er_int : std_logic;
+  signal gmii_tx_en_int : std_logic;
+
   -- resets (and reset generation)
   signal local_chk_reset                   : std_logic;
   signal chk_reset_int                     : std_logic;
@@ -253,6 +259,7 @@ architecture wrapper of xv6mac_straight is
   signal trig1 : std_logic_vector(38 downto 0);
   signal trig2 : std_logic_vector(12 downto 0);
   signal trig3 : std_logic_vector(38 downto 0);
+  signal trig4 : std_logic_vector(9 downto 0);
 
 ------------------------------------------------------------------------------
 -- Begin architecture
@@ -289,6 +296,10 @@ begin
   trig2(11) <= gmii_col;
   trig2(12) <= gmii_crs;
 
+  trig4(7 downto 0) <= gmii_txd_int;
+  trig4(8) <= gmii_tx_en_int;
+  trig4(9) <= gmii_tx_er_int;
+
   trig3(0) <= tx_mac_wa;
   trig3(1) <= tx_mac_wr;
   trig3(33 downto 2) <= tx_mac_data;
@@ -301,7 +312,8 @@ begin
   port map (
             CONTROL => icon_control0,
             CLK => clk_125,
-            TRIG0 => trig0
+            TRIG0 => trig0,
+            TRIG1 => trig4
            );
 
   Inst_mac2_ila : mac2_ila
@@ -335,6 +347,10 @@ begin
   ------------------------------------------------------------------------------
   -- Instantiate the Ethernet wrapper
   ------------------------------------------------------------------------------
+  gmii_txd <= gmii_txd_int;
+  gmii_tx_er <= gmii_tx_er_int;
+  gmii_tx_en <= gmii_tx_en_int;
+
   mac_block : MAC_top
   port map(
         Reset              => (not phy_resetn_int),
@@ -368,9 +384,9 @@ begin
         Rx_dv              => gmii_rx_dv,
         Rxd                => gmii_rxd,
         Tx_clk             => '0',
-        Tx_er              => gmii_tx_er,
-        Tx_en              => gmii_tx_en,
-        Txd                => gmii_txd,
+        Tx_er              => gmii_tx_er_int,
+        Tx_en              => gmii_tx_en_int,
+        Txd                => gmii_txd_int,
         Crs                => gmii_crs,
         Col                => gmii_col,
         Gtx_clk            => clk_gtx_prebuf,
