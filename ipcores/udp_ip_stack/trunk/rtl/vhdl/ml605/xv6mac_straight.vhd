@@ -205,6 +205,8 @@ architecture wrapper of xv6mac_straight is
   signal tx_last_reg                : std_logic;
   signal set_tx_reg                 : std_logic;
 
+  signal is_txing : std_logic := '0';
+
   signal phy_resetn_int                    : std_logic;
 
   -- gmii buffering
@@ -514,10 +516,16 @@ begin
       else
         txfifo_rst <= '0';
       end if;
+
+      if mac_tx_tlast = '1' then
+        is_txing <= '1';
+      elsif tx_mac_eop <= '1' then
+        is_txing <= '0';
+      end if;
     end if;
   end process;
 
-  txctrl : process(clk_66, txfifo_empty, txfifo_empty_prev, tx_mac_wa)
+  txctrl : process(clk_66, txfifo_empty, txfifo_empty_prev, tx_mac_wa, is_txing)
   begin
     if clk_66'event and clk_66 = '1' then
       if txfifo_empty = '0' and txfifo_empty_prev = '1' then
@@ -525,9 +533,14 @@ begin
       else
         tx_mac_sop <= '0';
       end if;
+      if txfifo_empty = '1' and txfifo_empty_prev = '0' and tx_mac_wr = '1' then
+        tx_mac_eop <= '1';
+      else
+        tx_mac_eop <= '0';
+      end if;
       txfifo_empty_prev <= txfifo_empty;
 
-      if tx_mac_wa = '1' and (not txfifo_empty = '1') then
+      if tx_mac_wa = '1' and (not txfifo_empty = '1') and is_txing = '1' then
         tx_mac_wr <= '1';
       else
         tx_mac_wr <= '0';
