@@ -180,7 +180,8 @@ architecture wrapper of xv6mac_straight is
       rd_en : IN STD_LOGIC;
       dout : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
       full : OUT STD_LOGIC;
-      empty : OUT STD_LOGIC
+      empty : OUT STD_LOGIC;
+      almost_empty : OUT STD_LOGIC
     );
   END COMPONENT;
 
@@ -234,8 +235,8 @@ architecture wrapper of xv6mac_straight is
   signal mac_rx_tlast_int  : std_logic;
 
   signal txfifo_rst   : std_logic;
-  signal txfifo_empty : std_logic;
-  signal txfifo_empty_prev : std_logic;
+  signal txfifo_empty, txfifo_almost_empty : std_logic;
+  signal is_txing_prev : std_logic;
   signal txfifo_full  : std_logic;
 
   signal rxfifo_empty : std_logic;
@@ -525,26 +526,33 @@ begin
     end if;
   end process;
 
-  txctrl : process(clk_66, txfifo_empty, txfifo_empty_prev, tx_mac_wa, is_txing)
+  txctrl : process(clk_66, txfifo_empty, tx_mac_wa, is_txing, is_txing_prev)
   begin
     if clk_66'event and clk_66 = '1' then
-      if txfifo_empty = '0' and txfifo_empty_prev = '1' then
-        tx_mac_sop <= '1';
+      if is_txing = '1' then
+        if is_txing_prev = '0' then
+          tx_mac_sop <= '1';
+        else
+          tx_mac_sop <= '0';
+        end if;
+
+        if txfifo_almost_empty = '1' and tx_mac_wr = '1' then
+          tx_mac_eop <= '1';
+        else
+          tx_mac_eop <= '0';
+        end if;
+
+        if tx_mac_wa = '1' and (not txfifo_empty = '1') then
+          tx_mac_wr <= '1';
+        else
+          tx_mac_wr <= '0';
+        end if;
       else
         tx_mac_sop <= '0';
-      end if;
-      if txfifo_empty = '1' and txfifo_empty_prev = '0' and tx_mac_wr = '1' then
-        tx_mac_eop <= '1';
-      else
         tx_mac_eop <= '0';
-      end if;
-      txfifo_empty_prev <= txfifo_empty;
-
-      if tx_mac_wa = '1' and (not txfifo_empty = '1') and is_txing = '1' then
-        tx_mac_wr <= '1';
-      else
         tx_mac_wr <= '0';
       end if;
+      is_txing_prev <= is_txing;
     end if;
   end process;
 
@@ -552,6 +560,7 @@ begin
   port map (
             rst    => txfifo_rst,
             empty  => txfifo_empty,
+            almost_empty => txfifo_almost_empty,
             full   => txfifo_full,
 
             wr_clk => clk_125,

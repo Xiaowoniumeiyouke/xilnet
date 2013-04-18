@@ -153,6 +153,13 @@ BEGIN
     IF(status(1) = '1') THEN
     END IF;
     
+    
+    IF(status(3) = '1') THEN
+      assert false
+       report "Almost Empty flag Mismatch/timeout"
+       severity error;
+    END IF;
+    
     IF(status(5) = '1') THEN
       assert false
        report "Empty flag Mismatch/timeout"

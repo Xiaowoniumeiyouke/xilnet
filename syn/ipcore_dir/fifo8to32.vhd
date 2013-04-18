@@ -50,7 +50,8 @@ ENTITY fifo8to32 IS
     rd_en : IN STD_LOGIC;
     dout : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
     full : OUT STD_LOGIC;
-    empty : OUT STD_LOGIC
+    empty : OUT STD_LOGIC;
+    almost_empty : OUT STD_LOGIC
   );
 END fifo8to32;
 
@@ -66,7 +67,8 @@ COMPONENT wrapped_fifo8to32
     rd_en : IN STD_LOGIC;
     dout : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
     full : OUT STD_LOGIC;
-    empty : OUT STD_LOGIC
+    empty : OUT STD_LOGIC;
+    almost_empty : OUT STD_LOGIC
   );
 END COMPONENT;
 
@@ -120,7 +122,7 @@ END COMPONENT;
       c_error_injection_type_wrch => 0,
       c_family => "spartan6",
       c_full_flags_rst_val => 0,
-      c_has_almost_empty => 0,
+      c_has_almost_empty => 1,
       c_has_almost_full => 0,
       c_has_axi_aruser => 0,
       c_has_axi_awuser => 0,
@@ -276,7 +278,8 @@ U0 : wrapped_fifo8to32
     rd_en => rd_en,
     dout => dout,
     full => full,
-    empty => empty
+    empty => empty,
+    almost_empty => almost_empty
   );
 -- synthesis translate_on
 

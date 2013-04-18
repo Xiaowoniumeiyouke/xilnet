@@ -97,6 +97,7 @@ ARCHITECTURE simulation_arch OF fifo8to32_synth IS
     -- FIFO interface signal declarations
     SIGNAL wr_clk_i                       :   STD_LOGIC;
     SIGNAL rd_clk_i                       :   STD_LOGIC;
+    SIGNAL almost_empty                   :   STD_LOGIC;
     SIGNAL rst	                          :   STD_LOGIC;
     SIGNAL wr_en                          :   STD_LOGIC;
     SIGNAL rd_en                          :   STD_LOGIC;
@@ -210,6 +211,7 @@ ARCHITECTURE simulation_arch OF fifo8to32_synth IS
     rd_en                     <=   rd_en_i;
     full_i                    <=   full;
     empty_i                   <=   empty;
+    almost_empty_i            <=   almost_empty;
 
     fg_dg_nv: fifo8to32_dgen
       GENERIC MAP (
@@ -285,6 +287,7 @@ ARCHITECTURE simulation_arch OF fifo8to32_synth IS
     PORT MAP (
            WR_CLK                    => wr_clk_i,
            RD_CLK                    => rd_clk_i,
+           ALMOST_EMPTY              => almost_empty,
            RST                       => rst,
            WR_EN 		     => wr_en,
            RD_EN                     => rd_en,

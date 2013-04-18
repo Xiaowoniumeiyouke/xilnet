@@ -75,6 +75,7 @@ entity fifo8to32_exdes is
    PORT (
            WR_CLK                    : IN  std_logic;
      	   RD_CLK                    : IN  std_logic;
+           ALMOST_EMPTY              : OUT std_logic;
            RST                       : IN  std_logic;
            WR_EN 		     : IN  std_logic;
            RD_EN                     : IN  std_logic;
@@ -98,6 +99,7 @@ architecture xilinx of fifo8to32_exdes is
    PORT (
            WR_CLK                    : IN  std_logic;
      	   RD_CLK                    : IN  std_logic;
+           ALMOST_EMPTY              : OUT std_logic;
            RST                       : IN  std_logic;
            WR_EN 		     : IN  std_logic;
            RD_EN                     : IN  std_logic;
@@ -128,6 +130,7 @@ begin
     PORT MAP (
            WR_CLK                    => wr_clk_i,
            RD_CLK                    => rd_clk_i,
+           ALMOST_EMPTY              => almost_empty,
            RST                       => rst,
            WR_EN 		     => wr_en,
            RD_EN                     => rd_en,
