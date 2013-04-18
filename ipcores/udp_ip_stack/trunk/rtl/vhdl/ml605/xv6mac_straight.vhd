@@ -519,7 +519,7 @@ begin
 
       if mac_tx_tlast = '1' then
         is_txing <= '1';
-      elsif tx_mac_eop <= '1' then
+      elsif tx_mac_eop = '1' then
         is_txing <= '0';
       end if;
     end if;
