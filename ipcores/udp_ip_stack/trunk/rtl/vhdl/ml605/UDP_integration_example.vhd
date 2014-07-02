@@ -216,7 +216,7 @@ begin
   )
   begin
     -- set up our local addresses and default controls
-    our_ip  <= x"c0a801F8";   -- 192.168.1.248
+    our_ip  <= x"0A0101F0";   -- 10.1.1.240
     our_mac   <= x"002320212223";
     control_int.ip_controls.arp_controls.clear_cache <= '0';
 
