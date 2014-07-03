@@ -23,6 +23,7 @@ use IEEE.NUMERIC_STD.ALL;
 use work.axi.all;
 use work.ipv4_types.all;
 use work.arp_types.all;
+use work.config.all;
 
 entity UDP_integration_example is
   port (
@@ -139,8 +140,6 @@ architecture Behavioral of UDP_integration_example is
 
   -- system signals
   signal clk_int              : std_logic;
-  signal our_mac            : STD_LOGIC_VECTOR (47 downto 0);
-  signal our_ip             : STD_LOGIC_VECTOR (31 downto 0);
   signal udp_tx_int           : udp_tx_type;
   signal udp_tx_result_int      : std_logic_vector (1 downto 0);
   signal udp_tx_data_out_ready_int  : std_logic;
@@ -216,8 +215,6 @@ begin
   )
   begin
     -- set up our local addresses and default controls
-    our_ip  <= x"0A0101F0";   -- 10.1.1.240
-    our_mac   <= x"002320212223";
     control_int.ip_controls.arp_controls.clear_cache <= '0';
 
     --Set LEDS to indicate current state
@@ -491,8 +488,8 @@ begin
              clk_in_n             => clk_in_n,
              clk_out          => clk_int,
              reset          => reset,
-             our_ip_address     => our_ip,
-             our_mac_address    => our_mac,
+             our_ip_address     => OUR_IP,
+             our_mac_address    => OUR_MAC,
              control          => control_int,
              -- status signals
              arp_pkt_count      => arp_pkt_count_int,
