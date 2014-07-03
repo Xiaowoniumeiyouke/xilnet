@@ -116,5 +116,22 @@ type udp_control_type is record
   ip_controls  : ip_control_type;
 end record;
 
+  -------------
+  -- ICMP RX --
+  -------------
+
+type icmp_rx_header_type is record
+  is_valid    : std_logic;
+  icmptype    : std_logic_vector(7 downto 0);
+  code        : std_logic_vector(7 downto 0);
+  checksum    : std_logic_vector(15 downto 0);
+  ident       : std_logic_vector(15 downto 0);
+  seqnum      : std_logic_vector(15 downto 0);
+end record;
+
+type icmp_rx_type is record
+  hdr  : icmp_rx_header_type;
+  data : axi_in_type;
+end record;
 
 end ipv4_types;
