@@ -68,14 +68,15 @@ begin
     tx_state, tx_count, tx_result_reg, ip_tx_start_reg, 
     -- control variables
     next_tx_state, next_tx_result, tx_count_mode, tx_count_val, tx_data,
-    set_last, tx_data_valid, set_ip_tx_start
+    set_last, tx_data_valid, set_ip_tx_start, set_last
   )
   begin
     -- set output followers
     ip_tx_start <= ip_tx_start_reg;
     ip_tx.hdr.protocol <= x"01";
-    ip_tx.hdr.data_length <= 8; -- TODO: fix if making use of the actual data!
+    ip_tx.hdr.data_length <= x"0008"; -- TODO: fix if making use of the actual data!
     ip_tx.hdr.dst_ip_addr <= icmp_txi.hdr.dst_ip;
+    ip_tx.data.data_out_valid <= tx_data_valid;
     if icmp_tx_start = '1' and ip_tx_start_reg = '0' then
       icmp_tx_result <= ICMPTX_RESULT_NONE;
     else
@@ -157,7 +158,7 @@ begin
           if icmp_txi.data.data_out_valid = '1' or tx_count = x"0000" then
             tx_data <= icmp_txi.data.data_out;
             -- TODO: fixme for packet sizes
-            if unsigned(tx_count) = unsigned(8) then
+            if tx_count = x"0008" then
               -- end of packet as expected
               set_last <= '1';
               next_tx_result <= ICMPTX_RESULT_SENT;

@@ -102,7 +102,7 @@ begin
     udp_tx_state, tx_count, tx_result_reg, ip_tx_start_reg, data_out_ready_reg, 
     -- control signals
     next_tx_state, set_tx_state, next_tx_result, set_tx_result, tx_count_mode, tx_count_val, 
-    tx_data, set_last, total_length, set_ip_tx_start, tx_data_valid 
+    tx_data, set_last, total_length, set_ip_tx_start, tx_data_valid
   )
 
   begin

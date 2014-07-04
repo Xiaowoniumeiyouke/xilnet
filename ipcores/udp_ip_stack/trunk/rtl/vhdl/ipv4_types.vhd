@@ -127,8 +127,9 @@ constant ICMPTX_RESULT_ERR       : std_logic_vector (1 downto 0) := "10";
 constant ICMPTX_RESULT_SENT     : std_logic_vector (1 downto 0) := "11";
 
 type icmp_tx_header_type is record
-  icmptype : std_logic_vector(7 downto 0);
-  code     : std_logic_vector(7 downto 0);
+  dst_ip      : std_logic_vector(31 downto 0);
+  icmptype    : std_logic_vector(7 downto 0);
+  code        : std_logic_vector(7 downto 0);
   checksum    : std_logic_vector(15 downto 0);
   ident       : std_logic_vector(15 downto 0);
   seqnum      : std_logic_vector(15 downto 0);
@@ -145,6 +146,7 @@ end record;
 
 type icmp_rx_header_type is record
   is_valid    : std_logic;
+  src_ip      : std_logic_vector(31 downto 0);
   icmptype    : std_logic_vector(7 downto 0);
   code        : std_logic_vector(7 downto 0);
   checksum    : std_logic_vector(15 downto 0);

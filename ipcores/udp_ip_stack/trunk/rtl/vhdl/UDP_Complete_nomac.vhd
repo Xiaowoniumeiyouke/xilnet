@@ -39,7 +39,7 @@ entity UDP_Complete_nomac is
          udp_txi          : in udp_tx_type;             -- UDP tx cxns
          udp_tx_result      : out std_logic_vector (1 downto 0);-- tx status (changes during transmission)
          udp_tx_data_out_ready: out std_logic;              -- indicates udp_tx is ready to take data
-                                                            -- UDP RX signals
+         -- UDP RX signals
          udp_rx_start     : out std_logic;              -- indicates receipt of udp header
          udp_rxo          : out udp_rx_type;
          -- IP RX signals
@@ -114,6 +114,55 @@ architecture structural of UDP_Complete_nomac is
         );
   END COMPONENT;
 
+
+  ------------------------------------------------------------------------------
+  -- Component Declaration for the ICMP layer
+  ------------------------------------------------------------------------------
+
+  component ICMP
+  port (
+  -- IP layer signals RX
+    ip_rx_start : in std_logic;
+    ip_rx       : in ipv4_rx_type;
+  -- IP layer signals TX
+    ip_tx_start          : out std_logic;
+    ip_tx                : out ipv4_tx_type;
+    ip_tx_result         : in std_logic_vector(1 downto 0);
+    ip_tx_data_out_ready : in std_logic;
+  -- system signals
+    rx_Clk : in std_logic;
+    tx_clk : in std_logic;
+    reset  : in std_logic
+  );
+  end component;
+
+  ------------------------------------------------------------------------------
+  -- Component Declaration for the IP layer TX arbitrator
+  ------------------------------------------------------------------------------
+
+  component ip_tx_arbitrator
+  port  (
+  -- ICMP TX signals
+    icmp_tx_start  : in std_logic;
+    icmp_tx        : in ipv4_tx_type;
+    icmp_tx_result : out std_logic_vector(1 downto 0);
+    icmp_tx_dor    : out std_logic;
+  -- UDP TX signals
+    udp_tx_start  : in std_logic;
+    udp_tx        : in ipv4_tx_type;
+    udp_tx_result : out std_logic_vector(1 downto 0);
+    udp_tx_dor    : out std_logic;
+  -- IP signals
+    ip_tx_start  : out std_logic;
+    ip_tx        : out ipv4_tx_type;
+    ip_tx_result : in std_logic_vector(1 downto 0);
+    ip_tx_dor    : in std_logic;
+  -- system signals
+    clk           : in std_logic;
+    reset         : in std_logic
+  );
+  end component;
+
   ------------------------------------------------------------------------------
   -- Component Declaration for the IP layer
   ------------------------------------------------------------------------------
@@ -158,22 +207,32 @@ architecture structural of UDP_Complete_nomac is
   end component;
 
   -- IP TX connectivity
-  signal ip_tx_int            : ipv4_tx_type;
-  signal ip_tx_start_int        : std_logic;
-  signal ip_tx_result_int       : std_logic_vector (1 downto 0);
-  signal ip_tx_data_out_ready_int : std_logic;
+  signal ip_tx                  : ipv4_tx_type;
+  signal ip_tx_start            : std_logic;
+  signal ip_tx_result           : std_logic_vector (1 downto 0);
+  signal ip_tx_data_out_ready   : std_logic;
+  signal ip_icmp_tx            : ipv4_tx_type;
+  signal ip_icmp_tx_start          : std_logic;
+  signal ip_icmp_tx_result         : std_logic_vector (1 downto 0);
+  signal ip_icmp_tx_data_out_ready : std_logic;
+  signal ip_udp_tx             : ipv4_tx_type;
+  signal ip_udp_tx_start       : std_logic;
+  signal ip_udp_tx_result      : std_logic_vector (1 downto 0);
+  signal ip_udp_tx_data_out_ready  : std_logic;
 
   -- IP RX connectivity
   signal ip_rx_int      : ipv4_rx_type;
   signal ip_rx_start_int  : std_logic := '0';
-
 
 begin
 
   -- output followers
   ip_rx_hdr <= ip_rx_int.hdr;
 
-  -- Instantiate the UDP TX block
+  ------------------------------------------------------------------------------
+  -- Instantiate the UDP layers
+  ------------------------------------------------------------------------------
+
   udp_tx_block: UDP_TX
   PORT MAP (
              -- UDP Layer signals
@@ -185,24 +244,71 @@ begin
              clk            => tx_clk,
              reset          => reset,
              -- IP layer TX signals
-             ip_tx_start      => ip_tx_start_int,
-             ip_tx          => ip_tx_int,
-             ip_tx_result     => ip_tx_result_int,
-             ip_tx_data_out_ready => ip_tx_data_out_ready_int
+             ip_tx_start      => ip_udp_tx_start,
+             ip_tx            => ip_udp_tx,
+             ip_tx_result     => ip_udp_tx_result,
+             ip_tx_data_out_ready => ip_udp_tx_data_out_ready
            );
 
-  -- Instantiate the UDP RX block
-  udp_rx_block: UDP_RX PORT MAP (
-                                  -- UDP Layer signals
-                                  udp_rxo         => udp_rxo,
-                                  udp_rx_start      => udp_rx_start,
-                                  -- system signals
-                                  clk             => rx_clk,
-                                  reset           => reset,
-                                  -- IP layer RX signals
-                                  ip_rx_start       => ip_rx_start_int,
-                                  ip_rx           => ip_rx_int
-                                );
+  udp_rx_block: UDP_RX
+  PORT MAP (
+            -- UDP Layer signals
+            udp_rxo         => udp_rxo,
+            udp_rx_start      => udp_rx_start,
+            -- system signals
+            clk             => rx_clk,
+            reset           => reset,
+            -- IP layer RX signals
+            ip_rx_start       => ip_rx_start_int,
+            ip_rx           => ip_rx_int
+          );
+
+  ------------------------------------------------------------------------------
+  -- Instantiate the ICMP layer
+  ------------------------------------------------------------------------------
+
+  icmp_block: ICMP
+  port map (
+           -- system signals
+           tx_clk       => tx_Clk,
+           rx_clk       => rx_clk,
+           reset        => reset,
+           -- IP layer signals RX
+           ip_rx_start  => ip_rx_start_int,
+           ip_rx        => ip_rx_int,
+           -- IP layer signals TX
+           ip_tx_start  => ip_icmp_tx_start,
+           ip_tx        => ip_icmp_tx,
+           ip_tx_result => ip_icmp_tx_result,
+           ip_tx_data_out_ready => ip_icmp_tx_data_out_ready
+           );
+
+
+  ------------------------------------------------------------------------------
+  -- Instantiate the IP layer TX arbitrator
+  ------------------------------------------------------------------------------
+
+  ip_tx_arbitrator_block : ip_tx_arbitrator
+  port map (
+           -- ICMP signals
+           icmp_tx_start  => ip_icmp_tx_start,
+           icmp_tx        => ip_icmp_tx,
+           icmp_tx_result => ip_icmp_tx_result,
+           icmp_tx_dor    => ip_icmp_tx_data_out_ready,
+           -- UDP signals
+           udp_tx_start  => ip_udp_tx_start,
+           udp_tx        => ip_udp_tx,
+           udp_tx_result => ip_udp_tx_result,
+           udp_tx_dor    => ip_udp_tx_data_out_ready,
+           -- IP signals
+           ip_tx_start  => ip_tx_start,
+           ip_tx        => ip_tx,
+           ip_tx_result => ip_tx_result,
+           ip_tx_dor    => ip_tx_data_out_ready,
+           -- system signals
+           clk          => tx_clk,
+           reset        => reset
+           );
 
   ------------------------------------------------------------------------------
   -- Instantiate the IP layer
@@ -216,10 +322,10 @@ begin
               )
   PORT MAP (
              -- IP interface
-             ip_tx_start      => ip_tx_start_int,
-             ip_tx          => ip_tx_int,
-             ip_tx_result     => ip_tx_result_int,
-             ip_tx_data_out_ready => ip_tx_data_out_ready_int,
+             ip_tx_start      => ip_tx_start,
+             ip_tx          => ip_tx,
+             ip_tx_result     => ip_tx_result,
+             ip_tx_data_out_ready => ip_tx_data_out_ready,
              ip_rx_start      => ip_rx_start_int,
              ip_rx          => ip_rx_int,
              -- System interface
@@ -245,7 +351,4 @@ begin
              mac_rx_tlast       => mac_rx_tlast
            );
 
-
 end structural;
-
-

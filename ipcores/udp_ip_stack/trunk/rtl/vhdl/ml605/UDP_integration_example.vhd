@@ -208,7 +208,7 @@ begin
 
   --Actual code
   process (
-    our_ip, our_mac, udp_tx_result_int, udp_rx_int, udp_tx_start_int, udp_rx_start_int, ip_rx_hdr_int,
+    udp_tx_result_int, udp_rx_int, udp_tx_start_int, udp_rx_start_int, ip_rx_hdr_int,
     udp_tx_int, count, clk_int, ip_pkt_count_int, arp_pkt_count_int,
     reset, tx_started_reg, tx_fin_reg, tx_start_reg, state, prime_second_tx, do_second_tx, set_second_tx,
     PB_DO_SECOND_TX, do_second_tx

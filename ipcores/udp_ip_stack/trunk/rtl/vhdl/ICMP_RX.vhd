@@ -9,6 +9,8 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.numeric_std.all;
+use work.axi.all;
+use work.ipv4_types.all;
 
 ---------------------------------------------------------------------------
 Entity ICMP_RX is
@@ -23,7 +25,7 @@ port
   reset         : in std_logic;
   -- IP layer signals
   ip_rx_start   : in std_logic;
-  ip_rx         : ipv4_rx_type
+  ip_rx         : in ipv4_rx_type
 );
 end entity;
 
@@ -46,6 +48,7 @@ Architecture Behavioral of ICMP_RX is
   signal seqnum   : std_logic_vector(15 downto 0);
   signal ident    : std_logic_vector(15 downto 0);
   signal icmp_rx_start_reg : std_logic;
+  signal src_ip         : std_logic_vector(31 downto 0);
 
   -- rx control signals
   signal next_rx_state : rx_state_type;
@@ -63,6 +66,7 @@ Architecture Behavioral of ICMP_RX is
   signal set_hdr_valid  : set_clr_type;
   signal dataval        : std_logic_vector(7 downto 0);
   signal set_icmp_rx_start : set_clr_type;
+  signal set_src_ip     : std_logic;
 
 begin
 
@@ -70,12 +74,12 @@ begin
     -- input signals
     ip_rx, ip_rx_start,
     -- state variables
-    rx_state, rx_count, checksum, code, icmptype, seqnum, ident, hdr_valid_reg,
+    rx_state, rx_count, checksum, code, icmptype, seqnum, ident, hdr_valid_reg, src_ip,
     -- control signals
     next_rx_state, rx_event, rx_count_mode, rx_count_val,
     set_checksum_h, set_checksum_l, set_code, set_type,
     set_seqnum_h, set_seqnum_l, set_ident_h, set_ident_l, set_hdr_valid,
-    set_icmp_rx_start
+    set_icmp_rx_start, set_src_ip, icmp_rx_start_reg
   )
   begin
 
@@ -87,6 +91,7 @@ begin
     icmp_rxo.hdr.checksum <= checksum;
     icmp_rxo.hdr.ident    <= ident;
     icmp_rxo.hdr.seqnum   <= seqnum;
+    icmp_rxo.hdr.src_ip   <= src_ip;
 
     -- set signal defaults
     next_rx_state <= IDLE;
@@ -103,6 +108,7 @@ begin
     set_ident_l  <= '0';
     dataval <= (others => '0');
     set_icmp_rx_start <= HOLD;
+    set_src_ip <= '0';
 
     -- determine event (if any)
     if ip_rx.data.data_in_valid = '1' then
@@ -120,6 +126,7 @@ begin
               -- ICMP protocol
               next_rx_state <= ICMP_HDR;
               rx_count_mode <= INCR;
+              set_src_ip    <= '1';
             else
               -- Ignore packet
               next_rx_state <= WAIT_END;
@@ -127,13 +134,14 @@ begin
         end case;
 
       when ICMP_HDR =>
+        next_rx_state <= ICMP_HDR;
         case rx_event is
           when NO_EVENT => -- do nothing
           when DATA =>
             if rx_count = x"0008" then
-              rx_count_mode <= SET_VALD;
+              rx_count_mode <= SET_VAL;
               rx_count_val  <= x"0001";
-              next_rx_state <= USER_DATA;
+              next_rx_state <= ICMP_DATA;
             else
               rx_count_mode <= INCR;
             end if;
@@ -149,8 +157,8 @@ begin
                 when x"0004" => set_ident_h <= '1';
                 when x"0005" => set_ident_l <= '1';
                 when x"0006" => set_seqnum_h <= '1';
-                when x"0007" => set_seqnum_l <= '1'; set_hdr_valid <= '1';
-                when x"0008" => set_udp_rx_start <= SET;
+                when x"0007" => set_seqnum_l <= '1'; set_hdr_valid <= SET;
+                when x"0008" => set_icmp_rx_start <= SET;
                 when others =>
               end case;
             end if;
@@ -174,12 +182,13 @@ begin
         end if;
 
       when WAIT_END =>
+        next_rx_state <= WAIT_END;
         case rx_event is
           when NO_EVENT => -- do nothing
           when DATA =>
             if ip_rx.data.data_in_last = '1' then
               next_rx_state <= IDLE;
-              set_udp_rx_start <= CLR;
+              set_icmp_rx_start <= CLR;
             end if;
         end case;
     end case;
@@ -198,7 +207,7 @@ begin
         icmptype <= (others => '0');
         seqnum   <= (others => '0');
         ident    <= (others => '0');
-        udp_rx_start_reg <= '0';
+        icmp_rx_start_reg <= '0';
       else
         -- next state
         rx_state <= next_rx_state;
@@ -213,7 +222,7 @@ begin
 
         -- data capture
         if set_checksum_h = '1' then checksum(15 downto 8) <= dataval; end if;
-        if set_checksum_l = '1' then checksum(7 downto 0) <= datavaal; end if;
+        if set_checksum_l = '1' then checksum(7 downto 0) <= dataval; end if;
         if set_code = '1' then code <= dataval; end if;
         if set_type = '1' then icmptype <= dataval; end if;
         if set_seqnum_h = '1' then seqnum(15 downto 8) <= dataval; end if;
@@ -221,19 +230,25 @@ begin
         if set_ident_h = '1' then ident(15 downto 8) <= dataval; end if;
         if set_ident_l = '1' then ident(7 downto 0) <= dataval; end if;
 
+        if set_src_ip = '1' then 
+          src_ip <= ip_rx.hdr.src_ip_addr;
+        else
+          src_ip <= src_ip;
+        end if;
+
         case set_hdr_valid is
           when SET => hdr_valid_reg <= '1';
           when CLR => hdr_valid_reg <= '0';
           when HOLD => hdr_valid_reg <= hdr_valid_reg;
         end case;
 
-        case set_udp_rx_start is
-          when SET => udp_rx_start_reg <= '1';
-          when CLR => udp_rx_start_reg <= '0';
-          when HOLD => udp_rx_start_reg <= udp_rx_start_reg;
+        case set_icmp_rx_start is
+          when SET => icmp_rx_start_reg <= '1';
+          when CLR => icmp_rx_start_reg <= '0';
+          when HOLD => icmp_rx_start_reg <= icmp_rx_start_reg;
         end case;
       end if;
     end if;
   end process;
 
-end architecture ICMP_RX_1;
+end architecture;
