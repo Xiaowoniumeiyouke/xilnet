@@ -148,7 +148,6 @@ begin
             when x"0007" => tx_data <= icmp_txi.hdr.seqnum(7 downto 0);
             when others =>  next_tx_result <= ICMPTX_RESULT_ERR;
           end case;
-        else
         end if;
 
       when SEND_ICMP_DATA =>

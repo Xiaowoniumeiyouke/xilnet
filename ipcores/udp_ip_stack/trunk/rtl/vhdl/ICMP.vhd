@@ -159,12 +159,14 @@ begin
     -- FSM
     case state is
       when IDLE =>
+        set_count <= RST;
         if icmp_rx_start = '1' then
           case icmp_rx_int.hdr.icmptype is
             when x"08" =>
               -- ECHO
               set_hdr <= '1';
               if icmp_rx_int.data.data_in_last = '1' then
+                set_tx_start <= SET;
                 next_state <= TRANSMIT;
               else
                 next_state <= RECEIPT;
@@ -183,6 +185,7 @@ begin
         end if;
 
       when TRANSMIT =>
+        set_tx_start <= CLR;
         if icmp_tx_result = ICMPTX_RESULT_ERR then
           -- error from IP TX layer, fail
           set_tx_start <= CLR;
@@ -195,6 +198,7 @@ begin
           if icmp_tx_data_out_ready = '1' then
             if unsigned(count) = x"05" then
               set_last <= '1';
+              set_tx_start <= CLR;
               next_state <= IDLE;
             else
               set_count <= INCR;
@@ -217,6 +221,7 @@ begin
         icmp_tx_hdr.checksum <= (others => '0');
         icmp_tx_hdr.ident    <= (others => '0');
         icmp_tx_hdr.seqnum   <= (others => '0');
+        tx_start_reg         <= '0';
       else
         -- transition to next state
         state <= next_state;
@@ -227,7 +232,7 @@ begin
           icmp_tx_hdr.code     <= x"00";
           icmp_tx_hdr.ident    <= icmp_rx_int.hdr.ident;
           icmp_tx_hdr.dst_ip   <= icmp_rx_int.hdr.src_ip;
-          icmp_tx_hdr.checksum <= x"0000"; --TODO;
+          icmp_tx_hdr.checksum <= x"0000";
         else
           icmp_tx_hdr <= icmp_tx_hdr;
         end if;
@@ -237,6 +242,13 @@ begin
           when SET  => tx_start_reg <= '1';
           when CLR  => tx_start_reg <= '0';
           when HOLD => tx_start_reg <= tx_start_reg;
+        end case;
+
+        case set_count is
+          when RST  => count <= (others => '0');
+          when SET  => count <= count;
+          when INCR => count <= count + 1;
+          when HOLD => count <= count;
         end case;
       end if;
     end if;

@@ -209,7 +209,7 @@ begin
                 when x"0007" => set_udp_rx_start <= SET;    -- indicate frame received
 
 
-                when others => -- ignore other bytes in udp header                    
+                when others => -- ignore other bytes in udp header
               end case;
             end if;
           end case;
@@ -236,7 +236,7 @@ begin
               -- TODO need to mark frame as errored
                 if ip_rx.data.data_in_last = '1' then
                   next_rx_state <= IDLE;
-                  set_rx_state <= '1';              
+                  set_rx_state <= '1';
                   set_data_last <= '1';
                 end if;
               end if;
@@ -245,7 +245,7 @@ begin
         when ERR =>
           if ip_rx.data.data_in_last = '0' then
             next_rx_state <= WAIT_END;
-            set_rx_state <= '1'; 
+            set_rx_state <= '1';
           else
             next_rx_state <= IDLE;
             set_rx_state <= '1'; 

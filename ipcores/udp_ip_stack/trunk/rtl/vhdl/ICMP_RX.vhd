@@ -67,6 +67,7 @@ Architecture Behavioral of ICMP_RX is
   signal dataval        : std_logic_vector(7 downto 0);
   signal set_icmp_rx_start : set_clr_type;
   signal set_src_ip     : std_logic;
+  signal set_data_last  : std_logic;
 
 begin
 
@@ -79,7 +80,7 @@ begin
     next_rx_state, rx_event, rx_count_mode, rx_count_val,
     set_checksum_h, set_checksum_l, set_code, set_type,
     set_seqnum_h, set_seqnum_l, set_ident_h, set_ident_l, set_hdr_valid,
-    set_icmp_rx_start, set_src_ip, icmp_rx_start_reg
+    set_icmp_rx_start, set_src_ip, icmp_rx_start_reg, set_data_last
   )
   begin
 
@@ -93,11 +94,22 @@ begin
     icmp_rxo.hdr.seqnum   <= seqnum;
     icmp_rxo.hdr.src_ip   <= src_ip;
 
+    if rx_state = ICMP_DATA then
+      icmp_rxo.data.data_in <= ip_rx.data.data_in;
+      icmp_rxo.data.data_in_valid <= ip_rx.data.data_in_valid;
+      icmp_rxo.data.data_in_last <= set_data_last;
+    else
+      icmp_rxo.data.data_in <= (others => '0');
+      icmp_rxo.data.data_in_valid <= '0';
+      icmp_rxo.data.data_in_last <= '0';
+    end if;
+
     -- set signal defaults
     next_rx_state <= IDLE;
     rx_event <= NO_EVENT;
     rx_count_mode <= HOLD;
     rx_count_val <= (others => '0');
+    set_hdr_valid  <= HOLD;
     set_checksum_h <= '0';
     set_checksum_l <= '0';
     set_code <= '0';
@@ -109,6 +121,7 @@ begin
     dataval <= (others => '0');
     set_icmp_rx_start <= HOLD;
     set_src_ip <= '0';
+    set_data_last <= '0';
 
     -- determine event (if any)
     if ip_rx.data.data_in_valid = '1' then
@@ -138,7 +151,7 @@ begin
         case rx_event is
           when NO_EVENT => -- do nothing
           when DATA =>
-            if rx_count = x"0008" then
+            if rx_count = x"0007" then
               rx_count_mode <= SET_VAL;
               rx_count_val  <= x"0001";
               next_rx_state <= ICMP_DATA;
@@ -157,8 +170,7 @@ begin
                 when x"0004" => set_ident_h <= '1';
                 when x"0005" => set_ident_l <= '1';
                 when x"0006" => set_seqnum_h <= '1';
-                when x"0007" => set_seqnum_l <= '1'; set_hdr_valid <= SET;
-                when x"0008" => set_icmp_rx_start <= SET;
+                when x"0007" => set_seqnum_l <= '1'; set_hdr_valid <= SET; set_icmp_rx_start <= SET;
                 when others =>
               end case;
             end if;
@@ -167,6 +179,7 @@ begin
       when ICMP_DATA =>
         --TODO: process data here.
         -- for now, just skip the rest of the packet
+        set_data_last <= '1';
         next_rx_state <= WAIT_END;
 
         case rx_event is

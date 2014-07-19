@@ -56,6 +56,12 @@ begin
     case state is
       when IDLE =>
         ip_tx_start <= '0';
+        ip_tx.data.data_out_valid <= '0';
+        ip_tx.data.data_out_last  <= '0';
+        ip_tx.data.data_out       <= (others => '0');
+        ip_tx.hdr.protocol        <= (others => '0');
+        ip_tx.hdr.dst_ip_addr     <= (others => '0');
+        ip_tx.hdr.data_length     <= (others => '0');
 
       when ICMP =>
         ip_tx_start    <= icmp_tx_start;
